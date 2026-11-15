@@ -1,0 +1,298 @@
+{
+ "generated_at": "2026-11-15T19:26:21",
+ "channel": "ETF",
+ "frozen_spec": {
+  "factor_set": "ma_only",
+  "k": 5,
+  "R": 10,
+  "capital": 1000000.0,
+  "price_mode": "open",
+  "segments": {
+   "train": [
+    0,
+    985
+   ],
+   "val": [
+    985,
+    1477
+   ],
+   "test": [
+    1477,
+    1971
+   ]
+  },
+  "n_etf": 59,
+  "min_bars": 120,
+  "cost_model": {
+   "commission_rate": 5e-05,
+   "commission_min_yuan": 5.0,
+   "stamp_duty": 0.0,
+   "transfer_fee": 0.0,
+   "slippage_bp_edge": 2.0
+  },
+  "spec_hash": "cce9fcabcc6bd2d419b006f1c0fcfb6426f5bc207fe097c847da5f295a3f3876",
+  "frozen_at": "2026-11-15T10:27:56",
+  "selected_by": "train_excess_ann",
+  "validation_excess_ann": 0.05361651215087347
+ },
+ "multiplicity": {
+  "n_trials_total": 144,
+  "n_trials_same_R": 36,
+  "grid": "9 因子集 × 4 k × 4 R",
+  "variance_source": "trial_sharpes",
+  "n_trial_sharpes_used": 36,
+  "note": "选参是在 144 个配置里取第 1 名，少报试验数 = 把过拟合当成不存在。但 E[max SR] 的方差 V 只在**被选中的 R 之内**估计 —— 不同 R 的期数从 21 到 191 不等，每期 Sharpe 的估计噪声尺度不可比，跨 R 混合会把「样本量差异」当成「策略差异」（实测混入后 E[max SR]=3.42，而 144 个配置的实测 Sharpe 最大仅 0.133，数学上不可能）。"
+ },
+ "test_segment": {
+  "n_periods": 49,
+  "R": 10,
+  "dates": [
+   "2024-10-31",
+   "2026-10-26"
+  ],
+  "sr_per_period": 0.08823989131675067,
+  "sr_per_period_excess": 0.039950952138197326,
+  "skew": -0.11743309482317217,
+  "kurtosis": 6.517557693017768,
+  "skew_excess": -0.1772746991062436,
+  "kurtosis_excess": 8.356404752738145,
+  "psr_vs_zero": 0.7274084277738272,
+  "psr_vs_zero_excess": 0.6085002378986908,
+  "psr_vs_benchmark": 0.7182707734835184,
+  "benchmark_sr_per_period": 0.003979087737568016,
+  "benchmark_annualized": 0.10027301098671401,
+  "metrics": {
+   "n_periods": 49,
+   "gross_per_period": 0.006405684948080678,
+   "gross_annualized": 0.1614232606916331,
+   "net_per_period": 0.00615772576440721,
+   "net_annualized": 0.1551746892630617,
+   "net_winsor_mean_annualized": 0.1653288057377245,
+   "net_median_annualized": 0.029368434431061914,
+   "sharpe": 0.44296073886261933,
+   "win_rate": 0.5306122448979592,
+   "median_period_net_bp": 11.654140647246791,
+   "mean_cost_per_period_bp": 2.4795918367346936,
+   "mean_held": 5.0,
+   "max_drawdown_ann": -0.2921487753152142
+  }
+ },
+ "overfit": {
+  "expected_max_sharpe": 0.9442203071317943,
+  "dsr": {
+   "observed_sr_per_period": 0.039950952138197326,
+   "deflation_benchmark_sr0": 0.9442203071317943,
+   "psr_vs_zero": 0.6085002378986908,
+   "deflated_sharpe_ratio": 2.2760443700739033e-10,
+   "n_obs": 49,
+   "n_trials": 36,
+   "skew": -0.1772746991062436,
+   "kurtosis": 8.356404752738145,
+   "sr_variance_across_trials": 0.19331582553959767,
+   "variance_source": "trial_sharpes",
+   "threshold": 0.95,
+   "passed": false
+  },
+  "dsr_variance_variants": {
+   "A_pooled_mixed": {
+    "variance": 0.19331582553959767,
+    "n_trials": 36,
+    "description": "36 个候选混池（含因子族间真实差异 → SR0 最高，最保守）",
+    "expected_max_sharpe": 0.9442203071317943,
+    "dsr": 2.2760443700739033e-10,
+    "passed": false,
+    "to_dict": {
+     "observed_sr_per_period": 0.039950952138197326,
+     "deflation_benchmark_sr0": 0.9442203071317943,
+     "psr_vs_zero": 0.6085002378986908,
+     "deflated_sharpe_ratio": 2.2760443700739033e-10,
+     "n_obs": 49,
+     "n_trials": 36,
+     "skew": -0.1772746991062436,
+     "kurtosis": 8.356404752738145,
+     "sr_variance_across_trials": 0.19331582553959767,
+     "variance_source": "explicit",
+     "threshold": 0.95,
+     "passed": false
+    }
+   },
+   "B_within_family": {
+    "variance": 0.005986812281951108,
+    "n_trials": 36,
+    "description": "剥离因子族主效应后的残差方差（最贴近论文「同一策略类」）",
+    "expected_max_sharpe": 0.1661641968437805,
+    "dsr": 0.19212731175738895,
+    "passed": false,
+    "to_dict": {
+     "observed_sr_per_period": 0.039950952138197326,
+     "deflation_benchmark_sr0": 0.1661641968437805,
+     "psr_vs_zero": 0.6085002378986908,
+     "deflated_sharpe_ratio": 0.19212731175738895,
+     "n_obs": 49,
+     "n_trials": 36,
+     "skew": -0.1772746991062436,
+     "kurtosis": 8.356404752738145,
+     "sr_variance_across_trials": 0.005986812281951108,
+     "variance_source": "explicit",
+     "threshold": 0.95,
+     "passed": false
+    }
+   },
+   "C_sampling_noise": {
+    "variance": 0.011111111111111112,
+    "n_trials": 144,
+    "description": "纯抽样噪声 (1+SR²/2)/(n-1)，不做任何经验估计（最宽松）",
+    "expected_max_sharpe": 0.28000239331838,
+    "dsr": 0.048976760045562846,
+    "passed": false,
+    "to_dict": {
+     "observed_sr_per_period": 0.039950952138197326,
+     "deflation_benchmark_sr0": 0.28000239331838,
+     "psr_vs_zero": 0.6085002378986908,
+     "deflated_sharpe_ratio": 0.048976760045562846,
+     "n_obs": 49,
+     "n_trials": 144,
+     "skew": -0.1772746991062436,
+     "kurtosis": 8.356404752738145,
+     "sr_variance_across_trials": 0.011111111111111112,
+     "variance_source": "explicit",
+     "threshold": 0.95,
+     "passed": false
+    }
+   }
+  },
+  "dsr_all_variants_pass": false,
+  "dsr_any_variant_pass": false,
+  "min_track_record_length": 1713.1003078541155,
+  "min_track_record_length_vs_benchmark": 390.1102755394118,
+  "pbo_train": {
+   "pbo": 0.0,
+   "n_splits": 70,
+   "n_strategies": 36,
+   "n_blocks": 8,
+   "median_logit": 3.583518938456112,
+   "overfit": false,
+   "n_candidates": 36,
+   "n_periods": 49,
+   "mean_pairwise_corr": 0.768288167896024,
+   "discriminative": false
+  },
+  "pbo_test": {
+   "pbo": 0.0,
+   "n_splits": 70,
+   "n_strategies": 36,
+   "n_blocks": 8,
+   "median_logit": 2.4277482359480524,
+   "overfit": false,
+   "n_candidates": 36,
+   "n_periods": 38,
+   "caveat": "测试段仅 38 期，分成 8 块后每块 4 期 —— 统计功效低，只作参考，判定以训练段 PBO 为准。"
+  },
+  "pbo_discriminativeness": {
+   "mean_pairwise_corr": 0.768288167896024,
+   "threshold": 0.7,
+   "discriminative": false,
+   "why": "候选之间高度相关 → CSCV 的「样本内最优」几乎必然也是「样本外最优」→ PBO 结构性偏低。此时 PBO 数值低**不是**「没过拟合」的证据，而是候选集退化的结果。"
+  }
+ },
+ "purged_cv": {
+  "hold_info": 11,
+  "audit": {
+   "folds": 5,
+   "violations": 0,
+   "ok": true
+  },
+  "folds": [
+   {
+    "fold": 0,
+    "n_train": 1566,
+    "n_test": 395,
+    "n_purged": 10,
+    "n_embargoed": 0,
+    "test_oos_ann": 0.20121161589421654
+   },
+   {
+    "fold": 1,
+    "n_train": 1557,
+    "n_test": 394,
+    "n_purged": 20,
+    "n_embargoed": 0,
+    "test_oos_ann": 0.2565659983946681
+   },
+   {
+    "fold": 2,
+    "n_train": 1557,
+    "n_test": 394,
+    "n_purged": 20,
+    "n_embargoed": 0,
+    "test_oos_ann": -0.05870167404156605
+   },
+   {
+    "fold": 3,
+    "n_train": 1557,
+    "n_test": 394,
+    "n_purged": 20,
+    "n_embargoed": 0,
+    "test_oos_ann": -0.06262879293381655
+   },
+   {
+    "fold": 4,
+    "n_train": 1567,
+    "n_test": 394,
+    "n_purged": 10,
+    "n_embargoed": 0,
+    "test_oos_ann": 0.18639226608074422
+   }
+  ],
+  "oos_n_periods": 188,
+  "oos_sr_per_period": 0.06889613292984353,
+  "note": "PurgedKFold 用信息集相交语义；ETF 第 i 期信息集 = [i-1, i+R]，故 label_end[i] = i + R，hold 参数取 R+1。"
+ },
+ "gates": [
+  {
+   "name": "过拟合审计 · DSR",
+   "pass": false,
+   "detail": "门槛 DSR ≥ 0.95；主口径 DSR 0.0000（E[max SR]=0.9442）；三口径 DSR：A_pooled_mixed=0.0000；B_within_family=0.1921；C_sampling_noise=0.0490 —— 存在不达标口径 → 不放行"
+  },
+  {
+   "name": "过拟合审计 · PSR(超额 vs 0)",
+   "pass": false,
+   "detail": "PSR(vs 0, 超额) = 0.6085（门槛 0.95）—— 49 期样本下，连「超额显著大于 0」都无法证实"
+  },
+  {
+   "name": "过拟合审计 · PBO",
+   "pass": false,
+   "detail": "训练段 CSCV 的 PBO = 0.0000（门槛 ≤0.5），36 个候选 / 49 期 / 70 个切分；候选两两相关均值 0.7683（判别力门槛 ≤0.7 → 无判别力，PBO 数值不构成证据）"
+  },
+  {
+   "name": "过拟合审计 · MinTRL",
+   "pass": false,
+   "detail": "证明超额每期 Sharpe 显著优于 0 至少需 1713.1 期，实测 49 期（比值 0.03）"
+  },
+  {
+   "name": "成本后 · Sharpe",
+   "pass": false,
+   "detail": "测试段净 Sharpe 0.443（门槛 ≥0.5）；基准 Sharpe 0.624"
+  },
+  {
+   "name": "成本后 · 净超额",
+   "pass": true,
+   "detail": "净年化 +15.52%，基准 +10.03%，超额 +5.49%"
+  }
+ ],
+ "verdict": {
+  "pass": false,
+  "passed": 1,
+  "total": 6,
+  "failed_gates": [
+   "过拟合审计 · DSR",
+   "过拟合审计 · PSR(超额 vs 0)",
+   "过拟合审计 · PBO",
+   "过拟合审计 · MinTRL",
+   "成本后 · Sharpe"
+  ],
+  "text": "过拟合审计 1/6 通过；未通过：过拟合审计 · DSR、过拟合审计 · PSR(超额 vs 0)、过拟合审计 · PBO、过拟合审计 · MinTRL、成本后 · Sharpe。",
+  "sim_position_allowed": false,
+  "note": "本审计只覆盖「是否过拟合」与「成本后绝对表现」。概率校准（G3）与预测闭环（G4）属于生产链路，ETF 通道尚未接入 → 这两道门禁在 ETF 通道**结构上无法通过**，不得因为审计通过就宣称 ETF 策略可进模拟仓位。"
+ }
+}

@@ -1,0 +1,72 @@
+# ── 运行数据（不进仓库）────────────────────────────────────────────────
+# 注意：`data/` 整目录被排除后，Git **不会**再进入其子目录，
+# 因此不能靠 `!data/research/` 反选（无效）。
+# 这里改成：排除整个 data/，再单独反选 research 下的研究产物。
+data/*
+!data/research/
+data/research/*
+!data/research/*.md
+!data/research/README.md
+!data/research/overfit_audit_method.md
+!data/research/etf_overfit_audit.json
+!data/research/etf_channel.json
+!data/research/etf_frozen_spec.json
+!data/research/etf_dataquality.json
+!data/research/oos_latest.json
+!data/research/execution_realism.json
+!data/research/signal_anatomy.json
+!data/research/survivorship_audit.json
+!data/research/cost_feasibility.json
+!data/research/loop_stats.json
+# 带时间戳的历史快照是运行产物，不进仓库
+data/research/*_2026*.json
+data/research/oos_2026*.json
+logs/
+state/
+render/
+*.log
+*.html
+!README.md
+
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ── 凭据（本仓库不应出现任何密钥）────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.p12
+credentials.json
+secrets/
+token.txt
+*_token.txt
+
+# ── 本地数据缓存 ─────────────────────────────────────────────────────
+.cache/
+.tmp/
+tmp/
+
+# ── 编辑器 / 系统 ────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# ── 版权材料（书籍正文 / 参考仓库 / 论文）────────────────────────────
+# 这些只用于本地阅读与公式溯源，**不得**进入公开仓库。
+afml_ref/
+zl_books/
+zl_text/
+papers/
+*.epub
+*.djvu

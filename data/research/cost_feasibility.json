@@ -1,0 +1,200 @@
+{
+  "generated_at": "2026-11-13",
+  "scope": "A股横截面因子策略成本可行性（源：data/research/oos_latest.json 测试段）",
+  "fee_model": {
+    "commission_rate": 0.00025,
+    "commission_min_yuan": 5.0,
+    "commission_both_sides": true,
+    "stamp_duty_sell_only": 0.0005,
+    "transfer_fee_both_sides_SH": 1e-05,
+    "sources": [
+      "财政部/税务总局公告2023年第39号 (印花税0.05%卖出单边)",
+      "中国结算沪深收费表2026-01-01 (过户费0.01‰双向)",
+      "证监发〔2002〕21号 (佣金上限3‰/单边,起点5元)",
+      "上交所《市场质量报告2025》价格冲击指数 (10万元单边13bp)"
+    ],
+    "note": "券商全包佣金已含经手费0.0341‰/证管费0.02‰/深市过户费,不得重复加;仅沪市过户费单列"
+  },
+  "fee_floor_bp": {
+    "order_ge_20000": 10.2,
+    "order_10000": 15.2,
+    "order_5000": 25.2,
+    "order_2000": 55.2
+  },
+  "strategy_configs": [
+    {
+      "label": "canonical q=0.5 (TEST)",
+      "turnover": 0.2208,
+      "cost_rate": 0.003,
+      "gross_long_vs_bench_bp_per_period": 2.601,
+      "gross_long_short_bp_per_period": 5.241,
+      "cost_long_only_bp_per_period": 6.624,
+      "cost_long_short_bp_per_period": 13.248,
+      "net_long_only_bp_per_period": -4.023,
+      "net_long_short_bp_per_period": -8.007,
+      "ALGEBRA_CHECK_lo": -0.0,
+      "ALGEBRA_CHECK_ls": 0.006785124747,
+      "MAX_RT_COST_long_only_bp": 11.779,
+      "MAX_RT_COST_long_short_bp": 11.868
+    },
+    {
+      "label": "fixed decile q=0.1 (TEST)",
+      "turnover": 0.466,
+      "cost_rate": 0.003,
+      "gross_long_vs_bench_bp_per_period": 4.846,
+      "gross_long_short_bp_per_period": 20.66,
+      "cost_long_only_bp_per_period": 13.98,
+      "cost_long_short_bp_per_period": 27.96,
+      "net_long_only_bp_per_period": -9.135,
+      "net_long_short_bp_per_period": -7.3,
+      "ALGEBRA_CHECK_lo": -0.0,
+      "ALGEBRA_CHECK_ls": 0.004150277285,
+      "MAX_RT_COST_long_only_bp": 10.398,
+      "MAX_RT_COST_long_short_bp": 22.167
+    }
+  ],
+  "verdict": {
+    "canonical q=0.5 (TEST)": {
+      "max_rt_cost_long_only_bp": 11.779,
+      "max_rt_cost_long_short_bp": 11.868,
+      "fee_floor_bp": 10.2,
+      "fee_floor_plus_5bp_edge_slippage_bp": 20.2,
+      "long_only_feasible": false,
+      "long_short_feasible": false,
+      "edge_shortfall_bp_long_only": 8.42,
+      "edge_shortfall_bp_long_short": 8.33
+    },
+    "fixed decile q=0.1 (TEST)": {
+      "max_rt_cost_long_only_bp": 10.398,
+      "max_rt_cost_long_short_bp": 22.167,
+      "fee_floor_bp": 10.2,
+      "fee_floor_plus_5bp_edge_slippage_bp": 20.2,
+      "long_only_feasible": false,
+      "long_short_feasible": true,
+      "edge_shortfall_bp_long_only": 9.8,
+      "edge_shortfall_bp_long_short": -1.97
+    }
+  },
+  "capital_scale": [
+    {
+      "combo": "q=0.5 long(631)",
+      "capital": 100000,
+      "per_order": 158,
+      "rt_bp_zero_slip": 636.2,
+      "rt_bp_slip5": 646.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.5 long(631)",
+      "capital": 300000,
+      "per_order": 475,
+      "rt_bp_zero_slip": 215.5,
+      "rt_bp_slip5": 225.5,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.5 long(631)",
+      "capital": 1000000,
+      "per_order": 1585,
+      "rt_bp_zero_slip": 68.3,
+      "rt_bp_slip5": 78.3,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.5 long(631)",
+      "capital": 3000000,
+      "per_order": 4754,
+      "rt_bp_zero_slip": 26.2,
+      "rt_bp_slip5": 36.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.5 long(631)",
+      "capital": 10000000,
+      "per_order": 15848,
+      "rt_bp_zero_slip": 11.5,
+      "rt_bp_slip5": 21.5,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 long(126)",
+      "capital": 100000,
+      "per_order": 794,
+      "rt_bp_zero_slip": 131.2,
+      "rt_bp_slip5": 141.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 long(126)",
+      "capital": 300000,
+      "per_order": 2381,
+      "rt_bp_zero_slip": 47.2,
+      "rt_bp_slip5": 57.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 long(126)",
+      "capital": 1000000,
+      "per_order": 7937,
+      "rt_bp_zero_slip": 17.8,
+      "rt_bp_slip5": 27.8,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 long(126)",
+      "capital": 3000000,
+      "per_order": 23810,
+      "rt_bp_zero_slip": 10.2,
+      "rt_bp_slip5": 20.2,
+      "order_ge_20000": true
+    },
+    {
+      "combo": "q=0.1 long(126)",
+      "capital": 10000000,
+      "per_order": 79365,
+      "rt_bp_zero_slip": 10.2,
+      "rt_bp_slip5": 20.2,
+      "order_ge_20000": true
+    },
+    {
+      "combo": "q=0.1 LS(126+126)",
+      "capital": 100000,
+      "per_order": 397,
+      "rt_bp_zero_slip": 257.2,
+      "rt_bp_slip5": 267.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 LS(126+126)",
+      "capital": 300000,
+      "per_order": 1190,
+      "rt_bp_zero_slip": 89.2,
+      "rt_bp_slip5": 99.2,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 LS(126+126)",
+      "capital": 1000000,
+      "per_order": 3968,
+      "rt_bp_zero_slip": 30.4,
+      "rt_bp_slip5": 40.4,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 LS(126+126)",
+      "capital": 3000000,
+      "per_order": 11905,
+      "rt_bp_zero_slip": 13.6,
+      "rt_bp_slip5": 23.6,
+      "order_ge_20000": false
+    },
+    {
+      "combo": "q=0.1 LS(126+126)",
+      "capital": 10000000,
+      "per_order": 39683,
+      "rt_bp_zero_slip": 10.2,
+      "rt_bp_slip5": 20.2,
+      "order_ge_20000": true
+    }
+  ]
+}

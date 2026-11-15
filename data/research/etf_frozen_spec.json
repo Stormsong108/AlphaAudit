@@ -1,0 +1,34 @@
+{
+ "factor_set": "ma_only",
+ "k": 5,
+ "R": 10,
+ "capital": 1000000.0,
+ "price_mode": "open",
+ "segments": {
+  "train": [
+   0,
+   985
+  ],
+  "val": [
+   985,
+   1477
+  ],
+  "test": [
+   1477,
+   1971
+  ]
+ },
+ "n_etf": 59,
+ "min_bars": 120,
+ "cost_model": {
+  "commission_rate": 5e-05,
+  "commission_min_yuan": 5.0,
+  "stamp_duty": 0.0,
+  "transfer_fee": 0.0,
+  "slippage_bp_edge": 2.0
+ },
+ "spec_hash": "cce9fcabcc6bd2d419b006f1c0fcfb6426f5bc207fe097c847da5f295a3f3876",
+ "frozen_at": "2026-11-15T10:27:56",
+ "selected_by": "train_excess_ann",
+ "validation_excess_ann": 0.05361651215087347
+}
