@@ -23,7 +23,13 @@ data/research/*_2026*.json
 data/research/oos_2026*.json
 logs/
 state/
-render/
+# ⚠️ `render/` 是**源码目录**（report.py / plain.py / text.py），
+# 不能整目录排除 —— 排除后 HTML 渲染层不会进仓库，克隆后
+# `import render.report` 直接 ModuleNotFoundError。
+# 只排除其下的输出产物。
+render/out/
+render/*.html
+render/__pycache__/
 *.log
 *.html
 !README.md
