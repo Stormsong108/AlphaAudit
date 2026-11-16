@@ -223,14 +223,53 @@ def _require(path: str):
         pytest.skip(f"{path} 不存在，先跑对应的研究脚本")
 
 
+def _require_runtime_data():
+    """面板来自 data/history/kline —— 公开仓库不含运行数据。
+
+    这里必须检查**目录**而不只是产物文件：oos_latest.json 在仓库里，
+    但没有 kline 目录时 analyze() 取不到面板。
+    少这一句 → 公开 clone 里 4 个用例变成 error，整个 pytest 退出码变 1。
+    """
+    kline = ROOT / "data" / "history" / "kline"
+    if not kline.is_dir():
+        pytest.skip("缺少运行时数据（data/history/kline）—— 公开仓库不含运行数据，请先运行数据刷新流程")
+
+
 @pytest.fixture(scope="module")
 def analysis():
     """整个模块只跑一次 analyze()（约 15 秒），后面的用例共用结果。"""
     _require("data/research/oos_latest.json")
     _require("data/research/cross_segment_check.json")
+    _require_runtime_data()
     out = fr.analyze()
     assert out.get("ok"), out.get("reason")
     return out
+
+
+def test_analyze_degrades_gracefully_without_runtime_data(monkeypatch):
+    """缺运行时数据时 analyze() 必须优雅返回 ok=False，而不是抛 FileNotFoundError。
+
+    「数据未就绪」≠「研究失败」—— 前者队列应记 skipped，后者会触发告警。
+    """
+    def _boom(*_a, **_k):
+        raise FileNotFoundError(2, "No such file or directory", "/nowhere/data/history/kline")
+
+    monkeypatch.setattr(fr.ooslab, "load_panel", _boom)
+    out = fr.analyze()
+    assert out["ok"] is False
+    assert "缺少运行时数据" in out["reason"]
+
+
+def test_analyze_reports_panel_load_failure(monkeypatch):
+    """非 FileNotFoundError 的异常要如实报出来，不能吞。"""
+    def _boom(*_a, **_k):
+        raise RuntimeError("面板结构坏了")
+
+    monkeypatch.setattr(fr.ooslab, "load_panel", _boom)
+    out = fr.analyze()
+    assert out["ok"] is False
+    assert "面板加载失败" in out["reason"]
+    assert "面板结构坏了" in out["reason"]
 
 
 def test_analyze_reproduces_canonical_three_segments(analysis):

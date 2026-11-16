@@ -455,7 +455,16 @@ def analyze(*, verbose: bool = True) -> dict[str, Any]:
     if not canon.get("names"):
         return {"ok": False, "reason": "缺少 canonical 产物 data/research/oos_latest.json"}
 
-    mat = ooslab.load_panel()
+    # 面板加载可能因为缺运行时数据（公开仓库不含 data/history/kline）直接抛
+    # FileNotFoundError —— 那属于「数据未就绪」，不是「研究失败」。
+    # 必须优雅返回 ok=False，让队列标 skipped 而不是 failed，更不能让 clone
+    # 里的 pytest 因 4 个 error 整体退出码变 1。
+    try:
+        mat = ooslab.load_panel()
+    except FileNotFoundError as exc:
+        return {"ok": False, "reason": f"缺少运行时数据（{exc.filename}）—— 先跑数据刷新流程"}
+    except Exception as exc:  # noqa: BLE001 —— 其它异常仍要暴露，不吞
+        return {"ok": False, "reason": f"面板加载失败：{type(exc).__name__}: {exc}"}
     if not mat.get("codes"):
         return {"ok": False, "reason": "面板为空（先跑数据刷新流程）"}
 
@@ -728,7 +737,13 @@ def _save_frozen(out: dict[str, Any]) -> None:
 def main() -> int:
     out = analyze()
     if not out.get("ok"):
-        print(f"[factor_redundancy] 未出结论：{out.get('reason')}")
+        reason = out.get("reason") or ""
+        print(f"[factor_redundancy] 未出结论：{reason}")
+        # 退出码语义：3 = 数据未就绪（skipped，不是事故）；1 = 真失败。
+        # 「缺运行时数据」属前者 —— 队列据此标 skipped，不设冷却、不告警。
+        if ("缺少运行时数据" in reason or "缺少 canonical 产物" in reason
+                or "面板为空" in reason):
+            return 3
         return 1
     _save(out)
     _save_frozen(out)

@@ -18,7 +18,7 @@
   "selection_segment": "train",
   "rule": "训练段成本后超额（相对基准）最高者；并列按换手低→因子少",
   "spec_hash": "8a7a533c0c51e83b6665001e2cefb5e7ad88fd268749acc73f7ef2f85b8cc6be",
-  "frozen_at": "2026-11-16 13:46:07",
+  "frozen_at": "2026-11-16 13:54:15",
   "selected_by": "factor_redundancy.py 训练段贪心前向",
   "validation_net_annualized": -0.009263716907826276
 }
