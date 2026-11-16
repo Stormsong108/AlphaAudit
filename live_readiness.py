@@ -675,8 +675,25 @@ def save_result(result: dict[str, Any], path: Path | None = None) -> Path:
 def full_check() -> dict[str, Any]:
     """一次跑完全部体检项。"""
     raw = load_oos()
+    # 面板截止日：从 canonical oos 产物里取。
+    # 体检数字全挂在这份 oos 上，不标截止日就无法区分
+    # 「指标变差了」和「数据截止日往后挪了一天」。
+    _panel_to = None
+    try:
+        _pn = raw.get("panel") or {}
+        if isinstance(_pn, dict):
+            _panel_to = _pn.get("to")
+        if _panel_to is None:
+            _segs = raw.get("segments") or {}
+            if isinstance(_segs, dict):
+                _t = _segs.get("test")
+                if isinstance(_t, (list, tuple)) and len(_t) >= 2:
+                    _panel_to = _t[1]
+    except Exception:
+        _panel_to = None
     return {
         "source": str(OOS_LATEST),
+        "panel_to": _panel_to,
         "cost_decomposition": cost_decomposition(raw),
         "breakeven_cost": breakeven_cost(raw),
         "execution_feasibility": execution_feasibility(raw),

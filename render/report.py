@@ -1227,6 +1227,54 @@ def render_html(
     # 现在把每份产物的生成时间显式印在页面上：数字必须能追到来源和时间。
     provenance_block = ""
     _prov: list[list[str]] = []
+
+    def _extract_panel_to(_d: dict) -> str:
+        """从产物里挖「面板截止日」—— 算的是哪一天为止的数据。
+
+        各产物结构不同：
+          oos_latest        → panel.to
+          cross_segment     → result.segments.test[1]
+          execution_realism → segment.test[1]
+          signal_anatomy    → panel_to（顶层）
+          live_readiness    → result.panel_to（顶层）
+        挖不到就写「未标注」—— 宁可明说不确定，也不猜一个日期。
+        """
+        def _from_seg(_obj):
+            if not isinstance(_obj, dict):
+                return None
+            _t = _obj.get("test")
+            if isinstance(_t, (list, tuple)) and len(_t) >= 2:
+                return _t[1]
+            return None
+
+        # 1) 顶层 panel_to
+        if _d.get("panel_to"):
+            return str(_d["panel_to"])
+        # 2) panel.to
+        _pn = _d.get("panel")
+        if isinstance(_pn, dict) and _pn.get("to"):
+            return str(_pn["to"])
+        # 3) 顶层 segments.test[1]
+        _v = _from_seg(_d.get("segments"))
+        if _v:
+            return str(_v)
+        # 4) 顶层 segment.test[1]
+        _v = _from_seg(_d.get("segment"))
+        if _v:
+            return str(_v)
+        # 5) result.* 各处
+        _r = _d.get("result")
+        if isinstance(_r, dict):
+            if _r.get("panel_to"):
+                return str(_r["panel_to"])
+            _v = _from_seg(_r.get("segments"))
+            if _v:
+                return str(_v)
+            _v = _from_seg(_r.get("segment"))
+            if _v:
+                return str(_v)
+        return "未标注"
+
     for _label, _path in (
         ("样本外验证（canonical 超额）", RESEARCH_DIR / "oos_latest.json"),
         ("跨区段稳健性检验（三段超额）", RESEARCH_DIR / "cross_segment_check.json"),
@@ -1239,20 +1287,28 @@ def render_html(
                 _d = json.loads(_path.read_text(encoding="utf-8"))
                 _gen = _d.get("generated_at") or "（产物未写 generated_at）"
                 _mt = time.strftime("%Y-%m-%d %H:%M", time.localtime(_path.stat().st_mtime))
-                _prov.append([esc(_label), esc(str(_gen)), esc(_mt)])
+                _pt = _extract_panel_to(_d)
+                _prov.append([esc(_label), esc(_path.name), esc(str(_gen)),
+                              esc(str(_mt)), esc(str(_pt))])
             else:
-                _prov.append([esc(_label), "缺失", "—"])
+                _prov.append([esc(_label), esc(_path.name), "缺失", "—", "—"])
         except Exception:
-            _prov.append([esc(_label), "读取失败", "—"])
+            _prov.append([esc(_label), esc(_path.name), "读取失败", "—", "—"])
     if _prov:
         # 项目铁律：每个物理表格后面必须紧跟一个分析块（逐表分析，一个都不许漏）。
         # 溯源表的分析要点：哪份产物最新、数字以谁为准、有没有产物缺时间戳。
         _stale: list[str] = []
-        for _label, _gen, _mt in _prov:
+        for _label, _fn, _gen, _mt, _pt in _prov:
             if _gen in ("缺失", "读取失败"):
                 _stale.append(f"{_label}：{_gen}")
             elif _gen == "（产物未写 generated_at）":
                 _stale.append(f"{_label}：产物未写 generated_at，只能靠文件修改时间判断新旧")
+            if _pt == "未标注":
+                _stale.append(f"{_label}：未标注面板截止日")
+        # 面板截止日是否一致 —— 不一致 = 这几份数字不是同一批数据，
+        # 混在一起读会得出「数字对不上」的错觉。
+        _pts = [p[4] for p in _prov if p[4] not in ("未标注", "—")]
+        _pt_same = len(set(_pts)) <= 1
         _prov_analysis = [
             "这张表是本期所有研究数字的出处：同一类指标如果在不同产物里数值不同，"
             "以生成时间最新的那份为准，其余是过期值。",
@@ -1260,11 +1316,15 @@ def render_html(
                             if not _stale else
                             "有 " + str(len(_stale)) + " 项溯源信息不完整："
                             + "；".join(_stale) + "。"),
+            ("五份产物算的都是同一批数据（面板截止 " + _pts[0] + "），数字可以直接互相印证。"
+             if _pt_same and _pts else
+             "注意：各产物的面板截止日不完全一致（" + "、".join(sorted(set(_pts))) + "），"
+             "说明它们不是同一批数据算出来的，数字差异可能来自数据新旧而非策略变化。"),
         ]
         provenance_block = (
             "<h2 style='font-size:14px;border-left-color:#f59e0b'>数据口径与产物时间"
             "（每个数字的出处）</h2>"
-            + table(["研究产物", "产物生成时间", "文件修改时间"], _prov)
+            + table(["研究产物", "产物文件", "产物生成时间", "文件修改时间", "面板截止日"], _prov)
             + analysis("数据溯源", _prov_analysis)
             + "<p class='note'>同一份日报里如果出现两个数值不同的同类数字，"
             "以生成时间最新的产物为准；本表即为溯源依据。</p>"

@@ -472,6 +472,9 @@ def main() -> None:
 
     out = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+        # 面板截止日：这份解剖算的是哪一天为止的数据。
+        # 不写的话，两次运行的结果无法区分「数字变了」还是「数据截止日变了」。
+        "panel_to": (list(mat["dates"])[-1] if len(mat.get("dates", [])) else None),
         "segment": "test",
         "n_periods": len(rows),
         "segments": {k: label for k, label in SEGMENTS},
