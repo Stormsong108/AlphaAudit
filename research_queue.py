@@ -96,6 +96,17 @@ STEPS: list[dict] = [
         "cmd": [sys.executable, str(ROOT / "cross_segment.py")],
     },
     {
+        # 跨来源对账：同一个指标在几份产物里必须算出同一个值。
+        # 对账不通过 = 有环节口径串了 = 日报必须拒绝出结论。
+        # 多前置：要比对 4 份产物（oos / cross_segment / realism / readiness），
+        # 少任何一份就可能拿「旧产物 vs 新产物」对账 → 误报口径不一致。
+        "key": "cross_source",
+        "title": "跨来源对账（同一指标多来源值必须一致，不一致就拒绝出结论）",
+        "min_hours": 6.0,
+        "requires": ["cross_segment", "realism", "readiness"],
+        "cmd": [sys.executable, str(ROOT / "cross_source.py")],
+    },
+    {
         # 实盘就绪度体检落盘：以前 full_check() 只在内存算，从不写文件，
         # 日报页面无从标注「实盘就绪度体检」的数字出处与时间，
         # 事后也无法复现当时按哪版面板算出的 1/6 通过。
@@ -216,13 +227,18 @@ def due(step: dict, st: dict) -> tuple[bool, str]:
 
     # 前置步骤没成功 → 本步不跑。刷新失败时不能接着出预测：
     # 那是拿旧行情冒充今天的闭环，失败关闭。
+    #
+    # requires 支持字符串（单前置）或列表（多前置）。
+    # 多前置的典型场景：跨来源对账要比对 4 份产物，
+    # 少任何一份就可能拿"旧产物 vs 新产物"对账 → 误报口径不一致。
     dep = step.get("requires")
-    if dep:
-        dep_rec = st.get("steps", {}).get(dep, {})
+    deps = [dep] if isinstance(dep, str) else list(dep or [])
+    for one in deps:
+        dep_rec = st.get("steps", {}).get(one, {})
         dep_status = dep_rec.get("last_status")
         if dep_status != "ok":
             why = dep_rec.get("last_error") or "尚未成功运行"
-            return False, f"前置步骤 {dep} 未成功（{why}）"
+            return False, f"前置步骤 {one} 未成功（{why}）"
 
     # 失败后的冷却期：不要在上游故障时反复硬刷。
     retry_at = rec.get("retry_after_at")

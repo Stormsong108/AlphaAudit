@@ -53,6 +53,9 @@ ANATOMY_FILE = ROOT / "data" / "research" / "signal_anatomy.json"
 QUEUE_FILE = STATE_DIR / "research_queue.json"
 DAILY_LOOP_FILE = STATE_DIR / "daily_loop.json"
 CROSS_SEG_FILE = ROOT / "data" / "research" / "cross_segment_check.json"
+# 跨来源对账产物：同一指标在几份产物里必须算出同一个值。
+# 对账不通过 = 口径串了 = 日报不得引用具体数字。
+CROSS_SRC_FILE = ROOT / "data" / "research" / "cross_source_check.json"
 
 # 投递防抖窗口（秒）。2026-11-09 踩坑教训：marker 必须按「完整时间戳 + 窗口」
 # 判断，不能按「当天已投递」判断 —— 否则白天手动跑一次，
@@ -583,6 +586,35 @@ def build_snapshot() -> dict[str, Any]:
             for k, v in (q.get("steps") or {}).items()
         }
 
+    # 跨来源对账 —— 同一指标在几份产物里必须算出同一个值。
+    # 对账不通过时，日报正文**不得引用任何具体数字**（宁可说"口径对不上"，
+    # 也不能挑一个来源显示 —— 挑一个等于编造确定性）。
+    xs = _read_json(CROSS_SRC_FILE)
+    if xs:
+        bad = xs.get("bad_metrics") or []
+        internal_bad = (xs.get("internal_reconciliation") or {}).get("status") == "INCONSISTENT"
+        snap["reconciliation"] = {
+            "available": True,
+            "consistent": bool(xs.get("consistent")),
+            "verdict": xs.get("verdict"),
+            "generated_at": xs.get("generated_at"),
+            "canonical": xs.get("canonical"),
+            "bad_metrics": [
+                {"key": b.get("key"), "label": b.get("label"),
+                 "status": b.get("status"), "spread": b.get("spread")}
+                for b in bad
+            ],
+            "internal_bad": internal_bad,
+            # 供正文引用：对账通过时给出 canonical 口径，超额取自 OOS。
+            "excess_annualized": next(
+                (m["values"].get("oos_latest.json")
+                 for m in (xs.get("metrics") or [])
+                 if m.get("key") == "excess_annualized"
+                 and m.get("status") == "CONSISTENT"),
+                None,
+            ),
+        }
+
     dl = _read_json(DAILY_LOOP_FILE)
     if dl:
         snap["daily_loop"] = {
@@ -687,6 +719,41 @@ def build_brief(snap: dict[str, Any] | None = None,
     open_ex = real.get("open_excess")
     openlim_ex = real.get("open_limit_excess")
 
+    # ================================================================
+    # 跨来源对账门禁 —— 放在所有结论之前
+    # ================================================================
+    # 同一个指标在几份产物里必须算出同一个值。对不上 = 有地方口径串了，
+    # 这时候任何具体数字都不可信（你不知道该信哪个）。
+    # 处置：**不显示数字**，直接说对不上、列出哪几个指标对不上。
+    # 绝不「挑一个来源显示」—— 挑一个 = 编造确定性。
+    xs = snap.get("reconciliation") or {}
+    xs_ok = xs.get("available") and xs.get("consistent")
+    xs_bad = xs.get("bad_metrics") or []
+    if xs.get("available") and not xs_ok:
+        L.append("  ⚠ 口径对账未通过 —— 本期不出数字结论")
+        L.append("")
+        _why: list[str] = []
+        for b in xs_bad:
+            _sp = b.get("spread")
+            _sp_txt = f"，极差 {_pct(_sp)}" if _sp is not None else ""
+            _why.append(f"{b.get('label') or b.get('key')}"
+                        f"（状态 {b.get('status')}{_sp_txt}）")
+        if xs.get("internal_bad"):
+            _why.append("体检模块内部两处独立算法算出的净超额不一致")
+        L.append(f"    原因：{len(_why)} 项对不上 —— " + "；".join(_why))
+        L.append("    影响：本期**不给出任何具体数字**。"
+                 "同一个指标在几份产物里算出不同值，说明有环节口径串了，"
+                 "此时挑任何一个来源显示都是编造确定性。")
+        L.append(f"    处置：先查口径，修好并重新对账通过后再出结论。")
+        if xs.get("generated_at"):
+            L.append(f"    对账产物生成时间：{xs['generated_at']}")
+        L.append("")
+        L.append("  一句话结论")
+        L.append("    当前状态：**口径对账未通过，暂不出结论**。"
+                 "（不代表策略变好或变坏 —— 是数据之间自相矛盾，先修数据。）")
+        L.append("")
+        return "\n".join(L)
+
     # 当前能不能用 —— 由三个硬事实决定
     can_use = False
     reasons: list[str] = []
@@ -714,6 +781,8 @@ def build_brief(snap: dict[str, Any] | None = None,
     L.append(f"    当前状态：**{verdict}**，还不能拿真钱去做。")
     for r in reasons:
         L.append(f"    原因：{r}")
+    if xs_ok:
+        L.append("    口径已对账：同一指标在 4 份产物里算出同一个值，数字可信。")
     L.append("")
 
     # ---------- 1. 今天做了什么 ----------

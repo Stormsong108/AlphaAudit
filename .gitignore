@@ -24,6 +24,10 @@ data/research/*
 # 两份都是纯研究结论，不含行情原始数据，公开仓库可放。
 !data/research/cross_segment_check.json
 !data/research/live_readiness.json
+# 2026-11-16 加：跨来源对账产物 —— 「同一个指标在几份产物里必须算出同一个值」
+# 的门禁结果。它是日报溯源链的最后一环：日报据此决定「出不出结论」。
+# 纯研究结论，不含行情原始数据。
+!data/research/cross_source_check.json
 # 带时间戳的历史快照是运行产物，不进仓库
 data/research/*_2026*.json
 data/research/oos_2026*.json

@@ -1281,6 +1281,7 @@ def render_html(
         ("成交现实性（开盘成交口径）", RESEARCH_DIR / "execution_realism.json"),
         ("信号解剖（时段拆解）", RESEARCH_DIR / "signal_anatomy.json"),
         ("实盘就绪度体检（门禁）", RESEARCH_DIR / "live_readiness.json"),
+        ("跨来源对账（同一指标多来源一致性）", RESEARCH_DIR / "cross_source_check.json"),
     ):
         try:
             if _path.exists():

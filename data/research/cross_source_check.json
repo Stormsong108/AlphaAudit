@@ -1,0 +1,102 @@
+{
+  "generated_at": "2026-11-16 12:58:58",
+  "panel_to": "2026-11-13",
+  "canonical": {
+    "cost_rate": 0.003,
+    "hold": 5,
+    "quantile": 0.5
+  },
+  "tolerance": {
+    "rel": 1e-09,
+    "abs": 1e-12
+  },
+  "metrics": [
+    {
+      "key": "excess_annualized",
+      "label": "测试段净超额（相对等权基准，年化）",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": -0.0129620485524706,
+        "cross_segment_check.json": -0.0129620485524706,
+        "execution_realism.json": -0.0129620485524706,
+        "live_readiness.json": -0.0129620485524706
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    },
+    {
+      "key": "long_only_annualized",
+      "label": "测试段策略年化（多头口径）",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": 0.14779151747007227,
+        "cross_segment_check.json": 0.14779151747007227,
+        "execution_realism.json": 0.14779151747007227,
+        "live_readiness.json": 0.14779151747007227
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    },
+    {
+      "key": "benchmark_annualized",
+      "label": "测试段基准年化（等权）",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": 0.16075356602254287,
+        "cross_segment_check.json": 0.16075356602254287,
+        "execution_realism.json": 0.16075356602254287,
+        "live_readiness.json": 0.16075356602254287
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    },
+    {
+      "key": "sharpe",
+      "label": "测试段夏普（多头口径）",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": 0.5079523251702476,
+        "cross_segment_check.json": 0.5079523251702476,
+        "execution_realism.json": 0.5079523251702476
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    },
+    {
+      "key": "mean_turnover",
+      "label": "测试段换手率（每期）",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": 0.22110322298759919,
+        "cross_segment_check.json": 0.22110322298759919,
+        "execution_realism.json": 0.22110322298759919,
+        "live_readiness.json": 0.22110322298759919
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    },
+    {
+      "key": "n_periods",
+      "label": "测试段期数",
+      "status": "CONSISTENT",
+      "values": {
+        "oos_latest.json": 143.0,
+        "cross_segment_check.json": 143.0,
+        "execution_realism.json": 143.0
+      },
+      "missing_sources": [],
+      "spread": 0.0
+    }
+  ],
+  "internal_reconciliation": {
+    "status": "CONSISTENT",
+    "cost_decomposition": -0.012962048552470597,
+    "benchmark_relative": -0.0129620485524706,
+    "spread": 3.469446951953614e-18,
+    "detail": "两处独立算法算出的净超额一致"
+  },
+  "consistent": true,
+  "bad_metrics": [],
+  "soft_issues": [],
+  "verdict": "各来源数值一致，可以出结论"
+}
