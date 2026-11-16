@@ -314,6 +314,16 @@ def test_main_daily_loop_failure_is_reported(monkeypatch):
         raise RuntimeError("上游不可用")
 
     monkeypatch.setitem(daily_loop.STAGES, "predict", boom)
+
+    # ⚠️ judge 也必须挡住：本用例只关心「失败如何被上报」。
+    # 若让 judge 真跑，它会走 predictor.judge_all() → save_loop_cache()
+    # → **写生产产物 data/research/loop_stats.json**，违反「测试只读生产产物」
+    # 的纪律（曾实测：单跑这个用例就会改动该文件的 generated_at）。
+    def judge_boom():
+        raise AssertionError("judge 不应在本用例中真跑（会写生产产物）")
+
+    monkeypatch.setitem(daily_loop.STAGES, "judge", judge_boom)
+
     status = main_mod.run_daily_loop()
     assert status["ok"] is False
     # 失败信息必须能被人看到

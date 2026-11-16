@@ -97,9 +97,27 @@ A股单笔 ≥2万 的**纯费率下限 = 10.2bp 往返**（佣金万2.5双边 +
 ## 快速开始
 
 ```bash
-python3 -m pytest tests/ -q        # 本地 527 passed（无运行数据时 0 skipped）
-python3 -m pytest tests/test_overfit_audit.py -q   # 过拟合审计专项
+# 1) 装依赖（公开仓库必须写清依赖，否则克隆者会撞 ModuleNotFoundError）
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# 2) 跑测试
+python3 -m pytest tests/ -q                       # 全量
+python3 -m pytest tests/test_overfit_audit.py -q  # 过拟合审计专项
 ```
+
+> ⚠️ **本机（Hermes）注意**：`PYTHONPATH` 可能指向 python3.14 的 site-packages，
+> 其中的 numpy 是 cp314 编译产物，会抢在 3.11 venv 之前被加载并直接炸掉 import。
+> 用本仓库的 venv 跑测试时净化掉它：
+> ```bash
+> env -u PYTHONPATH .venv/bin/python -m pytest tests/ -q
+> ```
+>
+> **缺 scipy 不会让仓库跑不起来**：`overfit_audit` 的正态分位数/累积分布
+> 依赖 scipy，缺它时显式抛 `ScipyRequiredError`，相关用例自动 skip
+> （22 个 CPCV 用例照常全跑）。这是刻意的 —— 这些数字与公开参考实现做过
+> **逐位**交叉验证（|d| = 0），用近似算法会让末位漂移、审计报告与已发布
+> 版本不可比，那比「跑不起来」更糟。
 
 主要模块：
 

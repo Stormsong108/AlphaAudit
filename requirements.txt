@@ -1,0 +1,20 @@
+# AlphaAudit / market_daily 运行与测试依赖
+#
+# 纪律：**依赖必须写进本文件**，否则公开仓库的克隆者会撞上
+# ModuleNotFoundError，且整个 pytest 在收集阶段就中断（exit 2），
+# 一条测试都跑不出来 —— 这正是 2026-11-16 踩的坑。
+#
+# 另注：本机 Hermes 的 PYTHONPATH 可能指向 python3.14 的 site-packages，
+# 其中的 numpy 是 cp314 编译产物，会抢在下面的 3.11 venv 之前被加载并炸掉。
+# 用本仓库的 venv 跑测试时请净化 PYTHONPATH：
+#     env -u PYTHONPATH .venv/bin/python -m pytest -q
+
+# ── 数值计算 ───────────────────────────────────────────────────────────
+numpy>=1.26,<3
+# scipy 只被 overfit_audit 用于正态分位数 / 累积分布（norm.ppf / norm.cdf）。
+# 它的取值与公开参考实现做过**逐位**交叉验证（|d| = 0），所以不做近似降级：
+# 缺 scipy 时 overfit_audit 显式抛 ScipyRequiredError，相关用例自动 skip。
+scipy>=1.11
+
+# ── 测试 ───────────────────────────────────────────────────────────────
+pytest>=8.0

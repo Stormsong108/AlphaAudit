@@ -34,7 +34,36 @@ from itertools import combinations
 from typing import Callable, Sequence
 
 import numpy as np
-from scipy.stats import norm
+
+try:  # pragma: no cover - 仅取决于环境是否装了 scipy
+    from scipy.stats import norm as _scipy_norm
+    SCIPY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    _scipy_norm = None
+    SCIPY_AVAILABLE = False
+
+
+class ScipyRequiredError(ImportError):
+    """缺少 scipy 时抛出（继承 ImportError，便于调用方按「依赖缺失」处理）。"""
+
+
+def _norm():
+    """返回 scipy 的标准正态分布对象（权威实现）。
+
+    为什么**不做**静默降级：本模块的 PSR / DSR / MinTRL / 多重检验门槛
+    已与公开参考实现做过**逐位**交叉验证（|d| = 0.000e+00），审计报告里的
+    数字就是这些值。若缺 scipy 时改用近似算法（stdlib ``NormalDist``
+    或 Acklam 近似），末位会漂移，报告数字将与已发布版本不可比 ——
+    那是比「跑不起来」更糟的错误。
+
+    所以缺依赖就**显式报错**：由调用方决定装依赖还是跳过这一项。
+    """
+    if _scipy_norm is None:
+        raise ScipyRequiredError(
+            "本模块需要 scipy（标准正态分位数/累积分布）：pip install scipy\n"
+            "不做静默降级：近似算法会让末位漂移，审计数字将与已发布报告不可比。"
+        )
+    return _scipy_norm
 
 __all__ = [
     "EULER_MASCHERONI",
@@ -56,6 +85,8 @@ __all__ = [
     "CPCVSplit",
     "CombinatorialPurgedCV",
     "cpcv_group_bounds",
+    "SCIPY_AVAILABLE",
+    "ScipyRequiredError",
     "cpcv_split_count",
     "cpcv_path_count",
     "cpcv_path_assignment",
@@ -124,7 +155,7 @@ def probabilistic_sharpe_ratio(
     denom = max(denom, 1e-12)
     se = math.sqrt(denom / (n_obs - 1))
     z = (observed_sr - benchmark_sr) / se
-    return float(norm.cdf(z))
+    return float(_norm().cdf(z))
 
 
 # --------------------------------------------------------------------------- #
@@ -166,8 +197,8 @@ def expected_max_sharpe(
     if n_trials == 1:
         return 0.0
     v = max(float(sr_variance_across_trials), 0.0)
-    z1 = float(norm.ppf(1.0 - 1.0 / n_trials))
-    z2 = float(norm.ppf(1.0 - 1.0 / (n_trials * math.e)))
+    z1 = float(_norm().ppf(1.0 - 1.0 / n_trials))
+    z2 = float(_norm().ppf(1.0 - 1.0 / (n_trials * math.e)))
     return float(math.sqrt(v) * ((1.0 - EULER_MASCHERONI) * z1 + EULER_MASCHERONI * z2))
 
 
@@ -287,7 +318,7 @@ def minimum_track_record_length(
     """
     if observed_sr <= benchmark_sr:
         return float("inf")
-    z = float(norm.ppf(confidence))
+    z = float(_norm().ppf(confidence))
     num = 1.0 - skew * observed_sr + ((kurtosis - 1.0) / 4.0) * observed_sr ** 2
     return float(1.0 + max(num, 1e-12) * (z / (observed_sr - benchmark_sr)) ** 2)
 
@@ -319,12 +350,12 @@ def multiple_testing_threshold(
         raise ValueError(f"rank 必须在 1..{n_trials} 之间")
     se = float(sr_standard_error)
     if method == "bonferroni":
-        z = float(norm.ppf(1.0 - alpha / n_trials))
+        z = float(_norm().ppf(1.0 - alpha / n_trials))
     elif method == "holm":
-        z = float(norm.ppf(1.0 - alpha / (n_trials - rank + 1)))
+        z = float(_norm().ppf(1.0 - alpha / (n_trials - rank + 1)))
     elif method == "bhy":
         c_n = sum(1.0 / i for i in range(1, n_trials + 1))
-        z = float(norm.ppf(1.0 - alpha * rank / (n_trials * c_n)))
+        z = float(_norm().ppf(1.0 - alpha * rank / (n_trials * c_n)))
     else:
         raise ValueError(f"未知的多次检验方法: {method}")
     return z * se
