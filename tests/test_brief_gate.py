@@ -265,3 +265,30 @@ def test_end_to_end_snapshot_has_no_spread_number(tmp_path, monkeypatch):
     for b in rec.get("bad_metrics") or []:
         assert "spread" not in b
         assert b.get("magnitude")
+
+
+# ------------------------------------------------------------------
+# 7. 队列状态必须带运行时间
+# ------------------------------------------------------------------
+# 队列状态是**上次运行**的快照，不是当前真相（队列有 min_hours 间隔）。
+# 光印状态 → 读者以为「现在就是这个状态」。
+# 实测踩坑：注入矛盾测试留下的 blocked 状态被日报印出来，
+# 而实际对账早已通过，读者会以为系统坏了。
+def test_queue_status_shows_run_time():
+    snap = _snap(_xs(True))
+    snap["queue"] = {"cross_source": {
+        "status": "ok",
+        "last_run_at": "2026-11-16T13:14:22+08:00",
+        "error": None,
+    }}
+    text = db.build_brief(snap=snap, prev={})
+    assert "研究队列跑「cross_source」：ok" in text
+    assert "2026-11-16 13:14" in text, "队列状态必须带运行时间，让读者判断新鲜度"
+
+
+def test_queue_status_without_time_still_renders():
+    """没有运行时间时不能崩，且仍显示状态。"""
+    snap = _snap(_xs(True))
+    snap["queue"] = {"cross_source": {"status": "ok", "last_run_at": None}}
+    text = db.build_brief(snap=snap, prev={})
+    assert "研究队列跑「cross_source」：ok" in text

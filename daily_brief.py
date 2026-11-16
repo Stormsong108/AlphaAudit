@@ -821,7 +821,16 @@ def build_brief(snap: dict[str, Any] | None = None,
                     "（规则已冻结，按真实时间一天天记，历史回测期次不算数）")
     q = snap.get("queue") or {}
     for key, v in q.items():
-        acts.append(f"研究队列跑「{key}」：{v.get('status') or '未知'}")
+        # 队列状态是**上次运行**的快照，不是当前真相（队列有 min_hours 间隔）。
+        # 光印状态会让人以为「现在就是这个状态」——
+        # 实测踩坑：注入矛盾测试留下的 blocked 状态被日报印出来，
+        # 而实际对账早已通过，读者会以为系统坏了。
+        #
+        # 必须带上运行时间：读者据此判断这个状态有多新。
+        _st = v.get("status") or "未知"
+        _at = (v.get("last_run_at") or "")[:16].replace("T", " ")
+        acts.append(f"研究队列跑「{key}」：{_st}"
+                    + (f"（{_at}）" if _at else ""))
     dl = snap.get("daily_loop") or {}
     # 研究队列的 refresh 步骤就是调 `daily_loop.py --stage refresh`，
     # 和每日流水线的 refresh 是**同一个任务**，并列显示两条会让人
