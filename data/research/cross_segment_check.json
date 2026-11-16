@@ -1,0 +1,530 @@
+{
+  "generated_at": "2026-11-16 12:16:55",
+  "result": {
+    "factor_names": [
+      "ma_dev_60",
+      "low_vol",
+      "atr_ratio",
+      "mom_20",
+      "ma_dev_20",
+      "turnover_trend",
+      "mom_60",
+      "rsi_14",
+      "rev_5",
+      "vol_ratio",
+      "updown_ratio"
+    ],
+    "quantile": 0.5,
+    "segments": {
+      "train": [
+        "2015-01-02",
+        "2020-12-01"
+      ],
+      "val": [
+        "2020-12-02",
+        "2023-11-21"
+      ],
+      "test": [
+        "2023-11-22",
+        "2026-11-13"
+      ]
+    },
+    "rows": [
+      {
+        "cost_rate": 0.0015,
+        "hold": 5,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 285,
+            "mean_turnover": 0.2283714707101598,
+            "long_only_annualized": 0.20716698604498124,
+            "long_only_sharpe": 0.6361169157456974,
+            "benchmark_annualized": 0.19806503949081117,
+            "excess_annualized": 0.00910194655417007,
+            "gross_excess_per_period": 0.0005231513837273444,
+            "net_excess_per_period": 0.0001805941776621047,
+            "cost_drag_per_period": 0.0003425572060652397,
+            "breakeven_cost": 0.0022907913238922376
+          },
+          "val": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22115911278643124,
+            "long_only_annualized": 0.03421949538211472,
+            "long_only_sharpe": 0.16934776616370703,
+            "benchmark_annualized": 0.05529287247873582,
+            "excess_annualized": -0.021073377096621104,
+            "gross_excess_per_period": -8.638389226124925e-05,
+            "net_excess_per_period": -0.0004181225614408949,
+            "cost_drag_per_period": 0.00033173866917964566,
+            "breakeven_cost": -0.0003905961240885804
+          },
+          "test": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22110322298759919,
+            "long_only_annualized": 0.16450692112793475,
+            "long_only_sharpe": 0.5655310606505882,
+            "benchmark_annualized": 0.16075356602254287,
+            "excess_annualized": 0.0037533551053918757,
+            "gross_excess_per_period": 0.00040612616593758646,
+            "net_excess_per_period": 7.447133145618802e-05,
+            "cost_drag_per_period": 0.00033165483448139844,
+            "breakeven_cost": 0.0018368170325602376
+          }
+        },
+        "excess_by_segment": {
+          "train": 0.00910194655417007,
+          "val": -0.021073377096621104,
+          "test": 0.0037533551053918757
+        },
+        "sign_by_segment": {
+          "train": 1,
+          "val": -1,
+          "test": 1
+        },
+        "all_same_sign": false,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.0015,
+        "hold": 10,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 142,
+            "mean_turnover": 0.3159276997886623,
+            "long_only_annualized": 0.18034789867298276,
+            "long_only_sharpe": 0.5739176160591201,
+            "benchmark_annualized": 0.18653690437663298,
+            "excess_annualized": -0.006189005703650219,
+            "gross_excess_per_period": 0.000228296085252429,
+            "net_excess_per_period": -0.0002455954644305638,
+            "cost_drag_per_period": 0.0004738915496829928,
+            "breakeven_cost": 0.0007226213003960909
+          },
+          "val": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 71,
+            "mean_turnover": 0.31484277311964975,
+            "long_only_annualized": 0.053662817950383225,
+            "long_only_sharpe": 0.25234302808764647,
+            "benchmark_annualized": 0.052605455017004386,
+            "excess_annualized": 0.0010573629333788387,
+            "gross_excess_per_period": 0.0005142230062421272,
+            "net_excess_per_period": 4.195884656265237e-05,
+            "cost_drag_per_period": 0.00047226415967947485,
+            "breakeven_cost": 0.001633269206553161
+          },
+          "test": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 71,
+            "mean_turnover": 0.31498463915607333,
+            "long_only_annualized": 0.18308929333498233,
+            "long_only_sharpe": 0.567460844976044,
+            "benchmark_annualized": 0.16643802176884434,
+            "excess_annualized": 0.016651271566137993,
+            "gross_excess_per_period": 0.0011332417034221256,
+            "net_excess_per_period": 0.0006607647446880156,
+            "cost_drag_per_period": 0.00047247695873411,
+            "breakeven_cost": 0.003597768152943515
+          }
+        },
+        "excess_by_segment": {
+          "train": -0.006189005703650219,
+          "val": 0.0010573629333788387,
+          "test": 0.016651271566137993
+        },
+        "sign_by_segment": {
+          "train": -1,
+          "val": 1,
+          "test": 1
+        },
+        "all_same_sign": false,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.0015,
+        "hold": 20,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 70,
+            "mean_turnover": 0.4374295454184742,
+            "long_only_annualized": 0.19247920251790046,
+            "long_only_sharpe": 0.5602481243133747,
+            "benchmark_annualized": 0.18620727755395833,
+            "excess_annualized": 0.006271924963942133,
+            "gross_excess_per_period": 0.0011539161406628005,
+            "net_excess_per_period": 0.0004977718225350914,
+            "cost_drag_per_period": 0.0006561443181277091,
+            "breakeven_cost": 0.002637947419758507
+          },
+          "val": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 35,
+            "mean_turnover": 0.4300225422691102,
+            "long_only_annualized": 0.025006990965247642,
+            "long_only_sharpe": 0.10856589370549259,
+            "benchmark_annualized": 0.03261505387837557,
+            "excess_annualized": -0.00760806291312793,
+            "gross_excess_per_period": 4.1219296488751085e-05,
+            "net_excess_per_period": -0.0006038145169149148,
+            "cost_drag_per_period": 0.0006450338134036659,
+            "breakeven_cost": 9.585380401512963e-05
+          },
+          "test": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 35,
+            "mean_turnover": 0.4383749771374636,
+            "long_only_annualized": 0.16022019138375773,
+            "long_only_sharpe": 0.5464362127821614,
+            "benchmark_annualized": 0.18074319497156624,
+            "excess_annualized": -0.020523003587808508,
+            "gross_excess_per_period": -0.000971247342850028,
+            "net_excess_per_period": -0.001628809808556229,
+            "cost_drag_per_period": 0.000657562465706201,
+            "breakeven_cost": -0.002215562916460601
+          }
+        },
+        "excess_by_segment": {
+          "train": 0.006271924963942133,
+          "val": -0.00760806291312793,
+          "test": -0.020523003587808508
+        },
+        "sign_by_segment": {
+          "train": 1,
+          "val": -1,
+          "test": -1
+        },
+        "all_same_sign": false,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.0015,
+        "hold": 40,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 34,
+            "mean_turnover": 0.5014877153876418,
+            "long_only_annualized": 0.15037164636209574,
+            "long_only_sharpe": 0.48135149335791727,
+            "benchmark_annualized": 0.14557121778401722,
+            "excess_annualized": 0.004800428578078525,
+            "gross_excess_per_period": 0.0015142043632526522,
+            "net_excess_per_period": 0.0007619727901711955,
+            "cost_drag_per_period": 0.0007522315730814568,
+            "breakeven_cost": 0.0030194246375151923
+          },
+          "val": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 17,
+            "mean_turnover": 0.5196567342772517,
+            "long_only_annualized": 0.05194954966792502,
+            "long_only_sharpe": 0.27063865070850596,
+            "benchmark_annualized": 0.04426330524449719,
+            "excess_annualized": 0.007686244423427829,
+            "gross_excess_per_period": 0.001999523898785375,
+            "net_excess_per_period": 0.0012200387973694965,
+            "cost_drag_per_period": 0.0007794851014158786,
+            "breakeven_cost": 0.003847778286884611
+          },
+          "test": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 17,
+            "mean_turnover": 0.516903719468432,
+            "long_only_annualized": 0.2256428285365608,
+            "long_only_sharpe": 0.6711169296323611,
+            "benchmark_annualized": 0.22369383418252703,
+            "excess_annualized": 0.001948994354033784,
+            "gross_excess_per_period": 0.0010847197623826167,
+            "net_excess_per_period": 0.00030936418317997066,
+            "cost_drag_per_period": 0.0007753555792026461,
+            "breakeven_cost": 0.0020984947902834
+          }
+        },
+        "excess_by_segment": {
+          "train": 0.004800428578078525,
+          "val": 0.007686244423427829,
+          "test": 0.001948994354033784
+        },
+        "sign_by_segment": {
+          "train": 1,
+          "val": 1,
+          "test": 1
+        },
+        "all_same_sign": true,
+        "all_positive": {
+          "train": 0.004800428578078525,
+          "val": 0.007686244423427829,
+          "test": 0.001948994354033784
+        }
+      },
+      {
+        "cost_rate": 0.003,
+        "hold": 5,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 285,
+            "mean_turnover": 0.2283714707101598,
+            "long_only_annualized": 0.1899021028592931,
+            "long_only_sharpe": 0.5832949187064277,
+            "benchmark_annualized": 0.19806503949081117,
+            "excess_annualized": -0.00816293663151807,
+            "gross_excess_per_period": 0.0005231513837273444,
+            "net_excess_per_period": -0.0001619630284031364,
+            "cost_drag_per_period": 0.0006851144121304808,
+            "breakeven_cost": 0.0022907913238922376
+          },
+          "val": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22115911278643124,
+            "long_only_annualized": 0.017499866455460537,
+            "long_only_sharpe": 0.08658456940009163,
+            "benchmark_annualized": 0.05529287247873582,
+            "excess_annualized": -0.03779300602327529,
+            "gross_excess_per_period": -8.638389226124925e-05,
+            "net_excess_per_period": -0.0007498612306205414,
+            "cost_drag_per_period": 0.0006634773383592922,
+            "breakeven_cost": -0.0003905961240885804
+          },
+          "test": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22110322298759919,
+            "long_only_annualized": 0.14779151747007227,
+            "long_only_sharpe": 0.5079523251702476,
+            "benchmark_annualized": 0.16075356602254287,
+            "excess_annualized": -0.0129620485524706,
+            "gross_excess_per_period": 0.00040612616593758646,
+            "net_excess_per_period": -0.00025718350302521027,
+            "cost_drag_per_period": 0.0006633096689627968,
+            "breakeven_cost": 0.0018368170325602376
+          }
+        },
+        "excess_by_segment": {
+          "train": -0.00816293663151807,
+          "val": -0.03779300602327529,
+          "test": -0.0129620485524706
+        },
+        "sign_by_segment": {
+          "train": -1,
+          "val": -1,
+          "test": -1
+        },
+        "all_same_sign": true,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.003,
+        "hold": 10,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 142,
+            "mean_turnover": 0.3159276997886623,
+            "long_only_annualized": 0.16840583162097134,
+            "long_only_sharpe": 0.535972284589346,
+            "benchmark_annualized": 0.18653690437663298,
+            "excess_annualized": -0.018131072755661642,
+            "gross_excess_per_period": 0.000228296085252429,
+            "net_excess_per_period": -0.0007194870141135571,
+            "cost_drag_per_period": 0.0009477830993659861,
+            "breakeven_cost": 0.0007226213003960909
+          },
+          "val": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 71,
+            "mean_turnover": 0.31484277311964975,
+            "long_only_annualized": 0.04176176112646046,
+            "long_only_sharpe": 0.19628537446599859,
+            "benchmark_annualized": 0.052605455017004386,
+            "excess_annualized": -0.010843693890543925,
+            "gross_excess_per_period": 0.0005142230062421272,
+            "net_excess_per_period": -0.00043030531311682237,
+            "cost_drag_per_period": 0.0009445283193589496,
+            "breakeven_cost": 0.001633269206553161
+          },
+          "test": {
+            "ok": true,
+            "hold": 10,
+            "n_periods": 71,
+            "mean_turnover": 0.31498463915607333,
+            "long_only_annualized": 0.17118287397488277,
+            "long_only_sharpe": 0.5304356826930262,
+            "benchmark_annualized": 0.16643802176884434,
+            "excess_annualized": 0.00474485220603843,
+            "gross_excess_per_period": 0.0011332417034221256,
+            "net_excess_per_period": 0.00018828778595390578,
+            "cost_drag_per_period": 0.0009449539174682198,
+            "breakeven_cost": 0.003597768152943515
+          }
+        },
+        "excess_by_segment": {
+          "train": -0.018131072755661642,
+          "val": -0.010843693890543925,
+          "test": 0.00474485220603843
+        },
+        "sign_by_segment": {
+          "train": -1,
+          "val": -1,
+          "test": 1
+        },
+        "all_same_sign": false,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.003,
+        "hold": 20,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 70,
+            "mean_turnover": 0.4374295454184742,
+            "long_only_annualized": 0.18421178410949135,
+            "long_only_sharpe": 0.5362229886868078,
+            "benchmark_annualized": 0.18620727755395833,
+            "excess_annualized": -0.001995493444466978,
+            "gross_excess_per_period": 0.0011539161406628005,
+            "net_excess_per_period": -0.00015837249559261593,
+            "cost_drag_per_period": 0.0013122886362554164,
+            "breakeven_cost": 0.002637947419758507
+          },
+          "val": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 35,
+            "mean_turnover": 0.4300225422691102,
+            "long_only_annualized": 0.01687956491636147,
+            "long_only_sharpe": 0.07324469440153891,
+            "benchmark_annualized": 0.03261505387837557,
+            "excess_annualized": -0.015735488962014103,
+            "gross_excess_per_period": 4.1219296488751085e-05,
+            "net_excess_per_period": -0.0012488483303185792,
+            "cost_drag_per_period": 0.0012900676268073302,
+            "breakeven_cost": 9.585380401512963e-05
+          },
+          "test": {
+            "ok": true,
+            "hold": 20,
+            "n_periods": 35,
+            "mean_turnover": 0.4383749771374636,
+            "long_only_annualized": 0.15193490431585974,
+            "long_only_sharpe": 0.5180655665846968,
+            "benchmark_annualized": 0.18074319497156624,
+            "excess_annualized": -0.028808290655706503,
+            "gross_excess_per_period": -0.000971247342850028,
+            "net_excess_per_period": -0.00228637227426242,
+            "cost_drag_per_period": 0.001315124931412392,
+            "breakeven_cost": -0.002215562916460601
+          }
+        },
+        "excess_by_segment": {
+          "train": -0.001995493444466978,
+          "val": -0.015735488962014103,
+          "test": -0.028808290655706503
+        },
+        "sign_by_segment": {
+          "train": -1,
+          "val": -1,
+          "test": -1
+        },
+        "all_same_sign": true,
+        "all_positive": false
+      },
+      {
+        "cost_rate": 0.003,
+        "hold": 40,
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 34,
+            "mean_turnover": 0.5014877153876418,
+            "long_only_annualized": 0.1456325874516825,
+            "long_only_sharpe": 0.4663398852402073,
+            "benchmark_annualized": 0.14557121778401722,
+            "excess_annualized": 6.136966766528973e-05,
+            "gross_excess_per_period": 0.0015142043632526522,
+            "net_excess_per_period": 9.741217089732218e-06,
+            "cost_drag_per_period": 0.00150446314616292,
+            "breakeven_cost": 0.0030194246375151923
+          },
+          "val": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 17,
+            "mean_turnover": 0.5196567342772517,
+            "long_only_annualized": 0.04703879352900498,
+            "long_only_sharpe": 0.24488246030523836,
+            "benchmark_annualized": 0.04426330524449719,
+            "excess_annualized": 0.002775488284507792,
+            "gross_excess_per_period": 0.001999523898785375,
+            "net_excess_per_period": 0.00044055369595361743,
+            "cost_drag_per_period": 0.0015589702028317577,
+            "breakeven_cost": 0.003847778286884611
+          },
+          "test": {
+            "ok": true,
+            "hold": 40,
+            "n_periods": 17,
+            "mean_turnover": 0.516903719468432,
+            "long_only_annualized": 0.22075808838758407,
+            "long_only_sharpe": 0.6563229750958084,
+            "benchmark_annualized": 0.22369383418252703,
+            "excess_annualized": -0.002935745794942962,
+            "gross_excess_per_period": 0.0010847197623826167,
+            "net_excess_per_period": -0.0004659913960226858,
+            "cost_drag_per_period": 0.0015507111584053025,
+            "breakeven_cost": 0.0020984947902834
+          }
+        },
+        "excess_by_segment": {
+          "train": 6.136966766528973e-05,
+          "val": 0.002775488284507792,
+          "test": -0.002935745794942962
+        },
+        "sign_by_segment": {
+          "train": 1,
+          "val": 1,
+          "test": -1
+        },
+        "all_same_sign": false,
+        "all_positive": false
+      }
+    ]
+  },
+  "analysis": {
+    "n_tested": 4,
+    "n_sign_stable": 2,
+    "n_positive_all_segments": 0,
+    "stable_holds": [
+      5,
+      20
+    ],
+    "robust_holds": [],
+    "verdict": "没有任何持有期在三个区段都跑赢基准 —— 正超额是样本内挑选的噪声"
+  }
+}

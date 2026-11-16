@@ -84,6 +84,29 @@ STEPS: list[dict] = [
         "cmd": [sys.executable, str(ROOT / "ooslab.py")],
     },
     {
+        # 跨区段稳健性检验：按**当前面板**重算 train/val/test 三段的超额。
+        # 2026-11-16 加进来的原因：本产物原先不在队列里，冻结在 11-12，
+        # 而 canonical oos 每天重跑 → 日报同时出现旧面板的 -2.03%
+        # 与今日的 -1.30%，同一个「测试段」两个数字。
+        # 必须紧跟 oos（依赖同一份 oos_latest.json），否则又会错位。
+        "key": "cross_segment",
+        "title": "跨区段稳健性检验（三段超额同号性，防止样本内挑选）",
+        "min_hours": 12.0,
+        "requires": "oos",
+        "cmd": [sys.executable, str(ROOT / "cross_segment.py")],
+    },
+    {
+        # 实盘就绪度体检落盘：以前 full_check() 只在内存算，从不写文件，
+        # 日报页面无从标注「实盘就绪度体检」的数字出处与时间，
+        # 事后也无法复现当时按哪版面板算出的 1/6 通过。
+        # 依赖 oos：体检读的就是 oos_latest.json。
+        "key": "readiness",
+        "title": "实盘就绪度体检落盘（门禁 1/6 通过的证据链）",
+        "min_hours": 12.0,
+        "requires": "oos",
+        "cmd": [sys.executable, str(ROOT / "live_readiness.py")],
+    },
+    {
         "key": "realism",
         "title": "成交真实性检验（收盘 / 次日开盘 / 涨停不可买 三口径）",
         "min_hours": 12.0,

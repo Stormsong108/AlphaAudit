@@ -613,20 +613,27 @@ def analyze_live_readiness(bundle: dict[str, Any]) -> list[str]:
     exs = cross.get("excess_by_segment") or {}
     if exs:
         cells = "，".join(f"{k} {v:+.2%}" for k, v in exs.items())
+        # 口径标注：这行数字是哪个成本/持有期口径下来的。
+        # 2026-11-16 踩坑：cross_segment_check.json 里同时存着成本 0.15% 与
+        # 0.30% 两套行，取错行会得到方向相反的测试段超额，日报里
+        # 就会出现两个互相打架的「测试段」数字。口径必须写出来。
+        _cr = cross.get("cost_rate")
+        _hd = cross.get("hold")
+        cal = (f"（成本 {_cr:.2%}、持有 {_hd} 日口径）" if _cr is not None and _hd is not None else "")
         if cross.get("all_segments_negative"):
             lines.append(
-                f"训练/验证/测试三段相对基准超额：{cells} —— "
+                f"训练/验证/测试三段相对基准超额{cal}：{cells} —— "
                 "三段全为负且方向一致，说明这是**结构性的负 alpha**，"
                 "不是某一段行情的运气。"
             )
         elif cross.get("sign_consistent"):
             lines.append(
-                f"训练/验证/测试三段相对基准超额：{cells} —— "
+                f"训练/验证/测试三段相对基准超额{cal}：{cells} —— "
                 "三段方向一致，结论不是单段挑出来的。"
             )
         else:
             lines.append(
-                f"训练/验证/测试三段相对基准超额：{cells} —— "
+                f"训练/验证/测试三段相对基准超额{cal}：{cells} —— "
                 "方向不一致，存在事后挑选嫌疑，不能只看好看的测试段。"
             )
 

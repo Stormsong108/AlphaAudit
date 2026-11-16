@@ -432,6 +432,10 @@ def build_snapshot() -> dict[str, Any]:
             ),
             "mean_turnover": seg.get("mean_turnover"),
             "n_periods": seg.get("n_periods"),
+            # 产物生成时间 + 面板末日 —— 日报必须显示，
+            # 否则读者会把几天前的数字当成今天的。
+            "generated_at": oos.get("generated_at"),
+            "panel_to": (oos.get("panel") or {}).get("to"),
         }
         # 面板规模（n_codes / n_dates / 末日）—— 供日报引用，
         # 避免把「1298 只」写死在文案里随面板增长而失真。
@@ -515,16 +519,41 @@ def build_snapshot() -> dict[str, Any]:
         rows_cs = res.get("rows") or []
         seg_vals: dict[str, float] = {}
         seg_dates: dict[str, list] = {}
-        if rows_cs:
-            # 优先取第一行（canonical 配置：cost_rate/hold 由训练段选出）
-            per = (rows_cs[0].get("per_segment") or {})
+        # ⚠️ 2026-11-16 修正（第二次）：rows 的顺序是
+        #   for cost in (0.0015, 0.0030): for hold in (5,10,20,40)
+        # 所以 rows[0] 是 **cost=0.15%** 的行，不是 canonical 的 cost=0.30%。
+        # 旧代码写死 rows[0] → 日报三段数字取自 0.15% 成本口径，
+        # 与 canonical（0.30%）的 test 段 -1.2962% 差出 +0.3753%（方向相反），
+        # 同一个「测试段」出现第四个数字。
+        # 现在按 live_readiness 的同一规则选行：cost=0.30% + canonical hold。
+        canon_hold = 5
+        try:
+            _oos = _read_json(OOS_FILE) or {}
+            # canonical hold 有两个来源：config.hold 与 strategy_test_segment.hold。
+            # 优先后者（与 live_readiness._section 的口径一致），再退回前者。
+            _seg = _oos.get("strategy_test_segment") or {}
+            canon_hold = int(_seg.get("hold")
+                             or (_oos.get("config") or {}).get("hold")
+                             or 5)
+        except Exception:
+            canon_hold = 5
+        row_cs = next(
+            (r for r in rows_cs
+             if r.get("hold") == canon_hold
+             and abs((r.get("cost_rate") or 0) - 0.0030) < 1e-9),
+            None,
+        )
+        # 找不到 canonical 行时**不用**兜底取 rows[0]（那是别的成本口径），
+        # 直接判定为不可用 —— 宁可缺数据，不给错数据。
+        if row_cs:
+            per = (row_cs.get("per_segment") or {})
             for tag in ("train", "val", "validation", "test"):
                 node = per.get(tag)
                 if isinstance(node, dict) and node.get("excess_annualized") is not None:
                     seg_vals[tag] = float(node["excess_annualized"])
-            for tag, rng in (res.get("segments") or {}).items():
-                if isinstance(rng, list):
-                    seg_dates[tag] = rng
+        for tag, rng in (res.get("segments") or {}).items():
+            if isinstance(rng, list):
+                seg_dates[tag] = rng
         vals = list(seg_vals.values())
         snap["cross_segment"] = {
             "available": bool(vals),
@@ -535,8 +564,9 @@ def build_snapshot() -> dict[str, Any]:
             "any_positive": bool(vals) and any(x > 0 for x in vals),
             "all_same_sign": bool(vals) and (all(x < 0 for x in vals) or all(x > 0 for x in vals)),
             "generated_at": cs.get("generated_at"),
-            # 该产物是 11-12 生成的，比其它产物旧 —— 日报要显示数据日期，
-            # 否则读者会以为它和今天的数字同源。
+            # 该行是哪个口径 —— 必须在日报里显示，否则读者无从判断数字出处。
+            "row_cost_rate": (row_cs or {}).get("cost_rate"),
+            "row_hold": (row_cs or {}).get("hold"),
             "source_mtime": datetime.fromtimestamp(
                 CROSS_SEG_FILE.stat().st_mtime
             ).strftime("%Y-%m-%d %H:%M") if CROSS_SEG_FILE.exists() else None,
@@ -733,6 +763,9 @@ def build_brief(snap: dict[str, Any] | None = None,
                  "（负数 = 跑输）")
         L.append(f"      换手率 {_pct(oos.get('mean_turnover'))} 一期，"
                  f"共 {oos.get('n_periods') or '取不到'} 期")
+        gen_oos = oos.get("generated_at")
+        if gen_oos:
+            L.append(f"      （这组数字算于 {gen_oos}）")
     else:
         L.append("      取不到（OOS 证据文件缺失）")
 
@@ -880,11 +913,26 @@ def build_brief(snap: dict[str, Any] | None = None,
     if cs.get("available") and cs.get("n_segments"):
         segs = cs.get("segments") or {}
         parts = []
-        for tag in ("train", "validation", "test"):
-            if tag in segs and segs[tag] is not None:
-                parts.append(f"{tag} {_pct(segs[tag])}/年")
+        # ⚠️ 2026-11-16 修正（第三次）：产物里的段名是 train / val / test，
+        # 旧代码遍历 ("train", "validation", "test") —— "validation" 永不匹配，
+        # 于是 val 段被静默丢掉，「三段」只显示两段，看起来像两段一致。
+        # 现在两种命名都认，且按 train → val → test 的固定顺序输出。
+        _LABELS = (("train", "train"), ("val", "validation"), ("test", "test"))
+        for _key, _label in _LABELS:
+            _v = segs.get(_key, segs.get(_label))
+            if _v is not None:
+                parts.append(f"{_label} {_pct(_v)}/年")
         if parts:
             L.append("      分段看：" + "、".join(parts) + " ——")
+        # 口径与时间戳必须写出来：这组三段数字来自哪份产物、哪个成本口径、
+        # 什么时候算的。缺了它，读者无法判断它和上面的 -1.30%/年 是不是一回事。
+        cs_cost = cs.get("row_cost_rate")
+        cs_hold = cs.get("row_hold")
+        cs_gen = cs.get("generated_at")
+        if cs_cost is not None and cs_hold is not None:
+            L.append(f"      （这组三段数字取自成本 {cs_cost:.2%}、持有 {cs_hold} 日"
+                     + (f"的口径，算于 {cs_gen}" if cs_gen else "")
+                     + "；上面那个测试段超额是同一个测试段的数，两者应当一致）")
         if cs.get("all_negative"):
             L.append("      **三段一致为负**，说明这是「结构性没有超额」，不是「参数没调好」。")
         elif cs.get("any_positive"):

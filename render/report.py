@@ -7,10 +7,15 @@
 """
 from __future__ import annotations
 
+import json
 import time
+from pathlib import Path
 from typing import Any
 
 import analysis as A
+
+# 研究产物目录 —— 用于日报页面上标注每个数字的出处（生成时间）。
+RESEARCH_DIR = Path(__file__).resolve().parent.parent / "data" / "research"
 
 # render/plain.py 是本包内的同级模块，必须用相对导入。
 # 写成 `import plain as P` 会去找顶层 plain 模块 —— 但工作区根目录
@@ -1215,6 +1220,56 @@ def render_html(
             + (f"<ul class='note'>{notes}</ul>" if notes else "")
         )
 
+    # ---------------------------------------------------------- 数据口径与产物时间
+    # 2026-11-16 加：这期日报里出现过同一个「测试段」两个数字
+    # （-2.03% 来自 11-12 的冻结产物，-1.30% 来自当天 canonical），
+    # 根因是研究产物不带 generated_at、读者无法判断数字出处。
+    # 现在把每份产物的生成时间显式印在页面上：数字必须能追到来源和时间。
+    provenance_block = ""
+    _prov: list[list[str]] = []
+    for _label, _path in (
+        ("样本外验证（canonical 超额）", RESEARCH_DIR / "oos_latest.json"),
+        ("跨区段稳健性检验（三段超额）", RESEARCH_DIR / "cross_segment_check.json"),
+        ("成交现实性（开盘成交口径）", RESEARCH_DIR / "execution_realism.json"),
+        ("信号解剖（时段拆解）", RESEARCH_DIR / "signal_anatomy.json"),
+        ("实盘就绪度体检（门禁）", RESEARCH_DIR / "live_readiness.json"),
+    ):
+        try:
+            if _path.exists():
+                _d = json.loads(_path.read_text(encoding="utf-8"))
+                _gen = _d.get("generated_at") or "（产物未写 generated_at）"
+                _mt = time.strftime("%Y-%m-%d %H:%M", time.localtime(_path.stat().st_mtime))
+                _prov.append([esc(_label), esc(str(_gen)), esc(_mt)])
+            else:
+                _prov.append([esc(_label), "缺失", "—"])
+        except Exception:
+            _prov.append([esc(_label), "读取失败", "—"])
+    if _prov:
+        # 项目铁律：每个物理表格后面必须紧跟一个分析块（逐表分析，一个都不许漏）。
+        # 溯源表的分析要点：哪份产物最新、数字以谁为准、有没有产物缺时间戳。
+        _stale: list[str] = []
+        for _label, _gen, _mt in _prov:
+            if _gen in ("缺失", "读取失败"):
+                _stale.append(f"{_label}：{_gen}")
+            elif _gen == "（产物未写 generated_at）":
+                _stale.append(f"{_label}：产物未写 generated_at，只能靠文件修改时间判断新旧")
+        _prov_analysis = [
+            "这张表是本期所有研究数字的出处：同一类指标如果在不同产物里数值不同，"
+            "以生成时间最新的那份为准，其余是过期值。",
+            "本期研究产物" + ("全部带生成时间戳，溯源链完整。"
+                            if not _stale else
+                            "有 " + str(len(_stale)) + " 项溯源信息不完整："
+                            + "；".join(_stale) + "。"),
+        ]
+        provenance_block = (
+            "<h2 style='font-size:14px;border-left-color:#f59e0b'>数据口径与产物时间"
+            "（每个数字的出处）</h2>"
+            + table(["研究产物", "产物生成时间", "文件修改时间"], _prov)
+            + analysis("数据溯源", _prov_analysis)
+            + "<p class='note'>同一份日报里如果出现两个数值不同的同类数字，"
+            "以生成时间最新的产物为准；本表即为溯源依据。</p>"
+        )
+
     # ---------------------------------------------------------- 每日研究汇报（大白话）
     # 2026-11-14 起：七段式研究汇报不再单独发一条飞书消息，
     # 而是嵌进同一份 HTML —— 「每天 21:30 只发一份 HTML」是既定铁律。
@@ -1251,6 +1306,7 @@ def render_html(
         f"<div class='cards'>{cards}</div>"
         f"{guide_html}"
         f"{session_block}"
+        f"{provenance_block}"
         f"{research_html}"
         f"{brief_block}"
         f"{body}"

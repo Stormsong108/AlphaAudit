@@ -217,11 +217,23 @@ def format_report(result: dict[str, Any], analysis: dict[str, Any]) -> str:
 
 
 if __name__ == "__main__":
+    from datetime import datetime
+
     res = cross_segment_check()
     ana = analyze(res)
     p = RESEARCH / "cross_segment_check.json"
-    p.write_text(json.dumps({"result": res, "analysis": ana},
-                             ensure_ascii=False, indent=2), encoding="utf-8")
+    # generated_at 是**必填**：本产物按面板重算，面板每天长新数据，
+    # 不带时间戳的产物无法区分「今天的数」和「上周的数」。
+    # 2026-11-16 踩坑：本文件冻结在 11-12（无 generated_at），
+    # 日报于是同时写出 -2.03%（旧面板 test 段）与 -1.30%（今日 canonical），
+    # 同一个「测试段」两个数字，读者无法判断哪个是真的。
+    payload = {
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "result": res,
+        "analysis": ana,
+    }
+    p.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(format_report(res, ana))
     print()
     print(f"已存：{p}")
+    print(f"generated_at：{payload['generated_at']}")

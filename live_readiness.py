@@ -43,6 +43,7 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -638,6 +639,39 @@ def readiness_verdict(raw: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def save_result(result: dict[str, Any], path: Path | None = None) -> Path:
+    """把体检结果落盘，带 generated_at。
+
+    2026-11-16 加：以前 full_check() 只在内存里算，从不落盘。
+    后果有二：
+      ① 日报页面无法给「实盘就绪度体检」标出数字出处与时间；
+      ② 同一份体检结果无法事后复现（今天算出来的 1/6 通过，
+         明天面板长一天可能变成别的数，但没人能核对当时按哪版算的）。
+
+    落盘纪律：
+      - 顶层必须有 generated_at（否则又是一份「看不出新旧」的产物）；
+      - 原子写（先写临时文件再 rename），避免读到半截 JSON；
+      - 落盘失败**不能**让体检崩掉 —— 体检本身是计算，
+        写文件是副产物。
+    """
+    target = Path(path) if path is not None else RESEARCH / "live_readiness.json"
+    payload = {
+        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "result": result,
+    }
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_suffix(target.suffix + ".tmp")
+        tmp.write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, default=str),
+            encoding="utf-8",
+        )
+        tmp.replace(target)
+    except Exception as exc:  # 落盘是副产物，失败不阻断体检
+        print(f"[live_readiness] 落盘失败（不影响体检结果）：{exc}")
+    return target
+
+
 def full_check() -> dict[str, Any]:
     """一次跑完全部体检项。"""
     raw = load_oos()
@@ -740,4 +774,8 @@ def format_report(result: dict[str, Any]) -> str:
 
 
 if __name__ == "__main__":
-    print(format_report(full_check()))
+    _res = full_check()
+    print(format_report(_res))
+    # 落盘：让日报页面能标出「实盘就绪度体检」的数字出处与时间。
+    _p = save_result(_res)
+    print(f"\n已存：{_p}")

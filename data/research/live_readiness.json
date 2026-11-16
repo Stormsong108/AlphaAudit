@@ -1,0 +1,238 @@
+{
+  "generated_at": "2026-11-16 12:30:10",
+  "result": {
+    "source": "/Users/sst/.hermes/profiles/xiaojin/workspace/market_daily/data/research/oos_latest.json",
+    "cost_decomposition": {
+      "gross_excess_per_period": 0.00040612616593758646,
+      "net_excess_per_period": -0.00025718350302521027,
+      "cost_drag_per_period": 0.0006633096689627968,
+      "turnover_per_period": 0.22110322298759919,
+      "cost_rate_roundtrip": 0.003,
+      "implied_cost_drag_per_period": 0.0006633096689627975,
+      "identity_residual": -7.589415207398531e-19,
+      "identity_holds": true,
+      "annualized": {
+        "gross_excess": 0.020468758763254356,
+        "net_excess": -0.012962048552470597,
+        "cost_drag": 0.03343080731572496,
+        "periods_per_year": 50.4
+      }
+    },
+    "breakeven_cost": {
+      "breakeven_cost_roundtrip": 0.0018368170325602376,
+      "actual_cost_roundtrip": 0.003,
+      "actual_is_above_breakeven": true,
+      "cost_gap_multiple": 1.633260116179599,
+      "headroom_ratio": -0.38772765581325414,
+      "max_turnover_at_actual_cost": 0.13537538864586215,
+      "current_turnover": 0.22110322298759919,
+      "turnover_reduction_needed": 0.3877276558132541
+    },
+    "execution_feasibility": {
+      "breakeven_cost_bp": 18.368170325602378,
+      "cost_floor_bp": 27.8,
+      "cost_floor": {
+        "per_order_yuan": 7936.507936507936,
+        "commission_bp_roundtrip": 12.6,
+        "stamp_duty_bp": 5.0,
+        "transfer_fee_bp": 0.2,
+        "slippage_bp_roundtrip": 10.0,
+        "total_bp_roundtrip": 27.8,
+        "total_rate_roundtrip": 0.00278,
+        "below_min_commission": true,
+        "capital_yuan": 1000000.0,
+        "n_positions": 126,
+        "min_order_yuan_for_rate": 20000.0,
+        "order_ge_2wan": false
+      },
+      "structurally_infeasible": true,
+      "verdict": "structurally_infeasible",
+      "reason": "成本地板 27.80bp > 打平成本 18.37bp —— 即便零滑点、最优费率也无法覆盖成本。",
+      "edge_gap_bp": 9.431829674397623
+    },
+    "three_calibers": {
+      "primary_winsor_mean": {
+        "net_annualized": 0.14779151747007227,
+        "sharpe": 0.5079523251702476,
+        "win_rate": 0.5034965034965035
+      },
+      "raw_mean": {
+        "net_annualized": 0.16118702035760696,
+        "sharpe": 0.5525981601040724,
+        "win_rate": 0.5174825174825175
+      },
+      "median": {
+        "net_annualized": -0.09118048702120476,
+        "sharpe": -0.32613137617578397,
+        "win_rate": 0.43356643356643354
+      },
+      "benchmark": {
+        "annualized": 0.16075356602254287,
+        "win_rate": 0.5104895104895105
+      },
+      "mean_minus_median_spread": -0.23897200449127703,
+      "skew_warning": true
+    },
+    "benchmark_relative": {
+      "long_only_annualized": 0.14779151747007227,
+      "benchmark_annualized": 0.16075356602254287,
+      "excess_annualized": -0.0129620485524706,
+      "has_alpha_vs_benchmark": false,
+      "long_short_annualized": -0.02548340373756931,
+      "long_short_sharpe": -0.16651577259326572,
+      "gross_ls_spread_per_period": 0.0008209962478944577,
+      "gross_ls_spread_annualized": 0.04137821089388067,
+      "interpretation": "多头跑输等权基准 → 收益主要来自 beta 而非选股，实盘定位应为「增强器/风控工具」，不能当独立主力策略。"
+    },
+    "cost_scenarios": [
+      {
+        "cost_rate": 0.0015,
+        "long_only_annualized": 0.16450692112793475,
+        "long_only_sharpe": 0.5655310606505882,
+        "excess_vs_benchmark": 0.0037533551053918757
+      },
+      {
+        "cost_rate": 0.003,
+        "long_only_annualized": 0.14779151747007227,
+        "long_only_sharpe": 0.5079523251702476,
+        "excess_vs_benchmark": -0.0129620485524706
+      },
+      {
+        "cost_rate": 0.005,
+        "long_only_annualized": 0.12550431259292222,
+        "long_only_sharpe": 0.43121614696465604,
+        "excess_vs_benchmark": -0.03524925342962065
+      }
+    ],
+    "readiness": {
+      "checks": [
+        {
+          "id": "C1",
+          "name": "成本可行性",
+          "pass": false,
+          "detail": "打平成本 0.1837% 往返，实际假设 0.30%，高出 1.63 倍。 且成本地板 27.80bp 已高于打平成本 18.37bp —— 结构性不可行。",
+          "fix": "结构性不可行：成本地板高于打平成本，压交易成本救不回来 —— 必须提高毛边际（换因子/换持有期/换标的）或放弃该策略。"
+        },
+        {
+          "id": "C2",
+          "name": "相对基准有 alpha",
+          "pass": false,
+          "detail": "多头 +14.78% vs 等权基准 +16.08%，超额 -1.30%。",
+          "fix": "换因子集或换选股逻辑；或改定位为「增强器」而非独立策略。"
+        },
+        {
+          "id": "C3",
+          "name": "收益分布稳健",
+          "pass": false,
+          "detail": "均值口径 +14.78%，中位数口径 -9.12%，落差 -23.90 个百分点。",
+          "fix": "实盘仓位按中位数口径设计，不要按均值口径设计。"
+        },
+        {
+          "id": "C4",
+          "name": "口径自洽",
+          "pass": true,
+          "detail": "成本分解残差 -7.589e-19（应为 0）。",
+          "fix": "若不为 0，说明成本或换手口径串了，先修口径再谈策略。"
+        },
+        {
+          "id": "C5",
+          "name": "跨区段一致（非样本内挑选）",
+          "pass": false,
+          "detail": "hold 5 日在训练/验证/测试三段相对基准超额：train -0.82%，val -3.78%，test -1.30%。 加权 -1.68%。 三段同号，说明是结构性结论而非运气。",
+          "fix": "三段一致为负 = 扣成本后系统性跑输基准，必须换因子/换逻辑或放弃独立策略定位。"
+        },
+        {
+          "id": "C6",
+          "name": "成本地板可达性（结构性）",
+          "pass": false,
+          "detail": "成本地板 27.80bp > 打平成本 18.37bp —— 即便零滑点、最优费率也无法覆盖成本。 单笔 7937 元未达2万元费率门槛。",
+          "fix": "毛边际必须提高到成本地板之上（当前差 9.43bp/期），否则任何执行优化都是白费。"
+        }
+      ],
+      "passed": 1,
+      "total": 6,
+      "verdict": "不具备实盘条件 —— C1、C2、C3、C5、C6 未通过，属结构性阻断，不得投入真钱",
+      "blocking_failed": [
+        "C1",
+        "C2",
+        "C3",
+        "C5",
+        "C6"
+      ],
+      "soft_failed": [],
+      "hard_block": true,
+      "cross_segment": {
+        "hold": 5,
+        "cost_rate": 0.003,
+        "segments": {
+          "train": [
+            "2015-01-02",
+            "2020-12-01"
+          ],
+          "val": [
+            "2020-12-02",
+            "2023-11-21"
+          ],
+          "test": [
+            "2023-11-22",
+            "2026-11-13"
+          ]
+        },
+        "excess_by_segment": {
+          "train": -0.00816293663151807,
+          "val": -0.03779300602327529,
+          "test": -0.0129620485524706
+        },
+        "per_segment": {
+          "train": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 285,
+            "mean_turnover": 0.2283714707101598,
+            "long_only_annualized": 0.1899021028592931,
+            "long_only_sharpe": 0.5832949187064277,
+            "benchmark_annualized": 0.19806503949081117,
+            "excess_annualized": -0.00816293663151807,
+            "gross_excess_per_period": 0.0005231513837273444,
+            "net_excess_per_period": -0.0001619630284031364,
+            "cost_drag_per_period": 0.0006851144121304808,
+            "breakeven_cost": 0.0022907913238922376
+          },
+          "val": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22115911278643124,
+            "long_only_annualized": 0.017499866455460537,
+            "long_only_sharpe": 0.08658456940009163,
+            "benchmark_annualized": 0.05529287247873582,
+            "excess_annualized": -0.03779300602327529,
+            "gross_excess_per_period": -8.638389226124925e-05,
+            "net_excess_per_period": -0.0007498612306205414,
+            "cost_drag_per_period": 0.0006634773383592922,
+            "breakeven_cost": -0.0003905961240885804
+          },
+          "test": {
+            "ok": true,
+            "hold": 5,
+            "n_periods": 143,
+            "mean_turnover": 0.22110322298759919,
+            "long_only_annualized": 0.14779151747007227,
+            "long_only_sharpe": 0.5079523251702476,
+            "benchmark_annualized": 0.16075356602254287,
+            "excess_annualized": -0.0129620485524706,
+            "gross_excess_per_period": 0.00040612616593758646,
+            "net_excess_per_period": -0.00025718350302521027,
+            "cost_drag_per_period": 0.0006633096689627968,
+            "breakeven_cost": 0.0018368170325602376
+          }
+        },
+        "weighted_excess": -0.016785306032074104,
+        "all_segments_negative": true,
+        "sign_consistent": true,
+        "robust_holds": [],
+        "verdict": "没有任何持有期在三个区段都跑赢基准 —— 正超额是样本内挑选的噪声"
+      }
+    }
+  }
+}

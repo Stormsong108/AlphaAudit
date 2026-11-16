@@ -18,6 +18,12 @@ data/research/*
 !data/research/survivorship_audit.json
 !data/research/cost_feasibility.json
 !data/research/loop_stats.json
+# 2026-11-16 加：这两份是「日报数字溯源链」的一环 ——
+# cross_segment_check.json = 三段稳健性检验（日报要标它的生成时间）；
+# live_readiness.json = 实盘就绪度体检落盘（原来只在内存算，无从追溯）。
+# 两份都是纯研究结论，不含行情原始数据，公开仓库可放。
+!data/research/cross_segment_check.json
+!data/research/live_readiness.json
 # 带时间戳的历史快照是运行产物，不进仓库
 data/research/*_2026*.json
 data/research/oos_2026*.json
