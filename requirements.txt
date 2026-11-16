@@ -1,5 +1,9 @@
 # AlphaAudit / market_daily 运行与测试依赖
 #
+# ⚠️ 需要 Python >= 3.11（scipy >= 1.11 要求 3.11+；项目代码用了
+#    `X | None` 形式的 PEP 604 类型标注，3.9/3.10 直接 SyntaxError）。
+#    本地验证环境：Python 3.11.15 + numpy 2.4.6 + scipy 1.17.1 + pytest 8.x
+#
 # 纪律：**依赖必须写进本文件**，否则公开仓库的克隆者会撞上
 # ModuleNotFoundError，且整个 pytest 在收集阶段就中断（exit 2），
 # 一条测试都跑不出来 —— 这正是 2026-11-16 踩的坑。
