@@ -415,6 +415,20 @@ def _etf_next_lines(payload: dict[str, Any] | None,
 
 
 # ------------------------------------------------------------------ 快照
+def _magnitude_of(spread: float | None) -> str | None:
+    """把极差定性化 —— 只说差距大不大，不给数值。
+
+    门禁失败时纪律是「不给出任何具体数字」。极差是「两个来源差多少」，
+    印成百分比等于递出去半个具体数字，暗示读者可以去推算某个来源的值。
+    """
+    if spread is None:
+        return None
+    try:
+        return "明显" if abs(float(spread)) > 1e-4 else "很小（接近浮点噪声量级）"
+    except (TypeError, ValueError):
+        return None
+
+
 def build_snapshot() -> dict[str, Any]:
     """抓当前所有关键指标，作为「今天」和「昨天」的比较基准。"""
     snap: dict[str, Any] = {"ts": time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -600,8 +614,12 @@ def build_snapshot() -> dict[str, Any]:
             "generated_at": xs.get("generated_at"),
             "canonical": xs.get("canonical"),
             "bad_metrics": [
+                # 只留定性信息（key / label / status / magnitude）。
+                # **不带 spread 数值**：门禁失败时正文不给任何具体数字，
+                # 快照里也不该留一个能被误引用的数字。
                 {"key": b.get("key"), "label": b.get("label"),
-                 "status": b.get("status"), "spread": b.get("spread")}
+                 "status": b.get("status"),
+                 "magnitude": _magnitude_of(b.get("spread"))}
                 for b in bad
             ],
             "internal_bad": internal_bad,
@@ -734,8 +752,11 @@ def build_brief(snap: dict[str, Any] | None = None,
         L.append("")
         _why: list[str] = []
         for b in xs_bad:
-            _sp = b.get("spread")
-            _sp_txt = f"，极差 {_pct(_sp)}" if _sp is not None else ""
+            # 极差**不显示数值**：极差是「两个来源差多少」，把它印成百分比
+            # 等于又递出去半个具体数字，违反「不给出任何具体数字」。
+            # 只做定性描述：差距是否大到不可能是浮点噪声。
+            _mag = b.get("magnitude")
+            _sp_txt = f"，两来源差距{_mag}" if _mag else ""
             _why.append(f"{b.get('label') or b.get('key')}"
                         f"（状态 {b.get('status')}{_sp_txt}）")
         if xs.get("internal_bad"):
