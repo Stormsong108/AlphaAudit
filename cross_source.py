@@ -515,7 +515,26 @@ def main() -> int:
     print(format_report(result))
     p = save_result(result)
     print(f"\n已存：{p}")
-    return 0 if result["consistent"] else 1
+    # 退出码语义（研究队列靠它区分「有效结论」和「执行失败」）：
+    #   0  = 对账通过，数字可信
+    #   2  = 对账**成功执行**，但发现口径矛盾 —— 这是有效结论，不是执行失败。
+    #        队列必须能区分这两者，否则每次门禁触发都变成「脚本崩了」，
+    #        触发 30 分钟冷却 + 金融组告警噪音，把真事故淹没在假告警里。
+    #   1  = 执行本身失败（读不到文件、代码异常）—— 真失败
+    #
+    # 但「所有来源都取不到」是第三种情况：既不是矛盾，也不是执行失败，
+    # 而是**数据还没准备好**（全新部署）。它不能报 2（会误报成口径事故），
+    # 也不能报 1（会误报成崩溃），单列一个退出码 3。
+    metrics = result.get("metrics") or []
+    all_missing = bool(metrics) and all(
+        m.get("status") == "MISSING" for m in metrics)
+    if result["consistent"]:
+        return 0
+    if all_missing:
+        print("\n[退出码 3] 所有来源均不可用 —— 数据尚未就绪，不构成口径矛盾。")
+        return 3
+    print("\n[退出码 2] 对账发现口径矛盾 —— 有效结论（门禁生效），非执行失败。")
+    return 2
 
 
 if __name__ == "__main__":

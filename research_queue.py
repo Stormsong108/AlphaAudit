@@ -293,6 +293,22 @@ def run_step(step: dict, st: dict) -> dict:
             rec["last_error"] = None
             # 成功了就清掉冷却期，否则上一次失败的 retry_after_at 会一直挡着。
             rec.pop("retry_after_at", None)
+        elif rc == 2 and step.get("key") == "cross_source":
+            # 退出码 2 = 对账成功执行但发现口径矛盾 —— 这是**有效结论**，
+            # 不是执行失败。不能标 failed：标了会触发 30 分钟冷却 +
+            # 金融组告警噪音，把真事故淹没在假告警里。
+            #
+            # 但它是**阻断状态**：状态标 "blocked"（自成一类），
+            # 下游依赖它的步骤不会被放行，同时不当作崩溃重试。
+            rec["last_status"] = "blocked"
+            rec["last_error"] = "口径对账未通过（有效结论，非执行失败）"
+            rec.pop("retry_after_at", None)
+        elif rc == 3 and step.get("key") == "cross_source":
+            # 退出码 3 = 所有来源都不可用（数据未就绪），不是矛盾也不是崩溃。
+            # 标 "skipped"：不算失败，但要等数据准备好。
+            rec["last_status"] = "skipped"
+            rec["last_error"] = "所有来源均不可用 —— 数据尚未就绪"
+            rec.pop("retry_after_at", None)
         else:
             rec["last_status"] = "failed"
             rec["last_error"] = "exit %d，日志 %s" % (rc, log)
@@ -346,12 +362,17 @@ def main() -> int:
             if s["key"] == args.step:
                 rec = run_step(s, st)
                 print("%s: %s %s" % (s["key"], rec["last_status"], rec.get("last_error") or ""))
+                # blocked（对账发现口径矛盾）是**有效结论**，不是执行失败。
+                # 单步模式返回 2 以区分：0=通过，1=执行失败，2=结论为「对不上」。
+                if rec["last_status"] == "blocked":
+                    return 2
                 return 0 if rec["last_status"] == "ok" else 1
         print("未知步骤: %s" % args.step, file=sys.stderr)
         return 2
 
     if args.run:
         ran = 0
+        bad: list[str] = []
         for s in STEPS:
             ok, why = due(s, st)
             if not ok:
@@ -361,8 +382,19 @@ def main() -> int:
             rec = run_step(s, st)
             ran += 1
             print("  → %s %s" % (rec["last_status"], rec.get("last_error") or ""))
+            # failed / blocked 必须让队列整体返回非零 ——
+            # cron 脚本靠这个决定是否投递金融组。
+            # 原来这里恒返回 0，导致「口径矛盾」这种真事故被静默吞掉：
+            # 门禁检测到了，但没有任何人收到通知。
+            #
+            # skipped 不算坏（数据未就绪，等下一轮）。
+            if rec["last_status"] in ("failed", "blocked"):
+                bad.append("%s（%s）" % (s["key"], rec["last_status"]))
         if not ran:
             print("没有到期步骤")
+        if bad:
+            print("\n需要处理的步骤：%s" % "、".join(bad))
+            return 1
         return 0
 
     ap.print_help()
