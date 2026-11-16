@@ -252,7 +252,15 @@ def test_history_saved_on_disk_is_used_as_previous_snapshot(brief_env):
 
     text = DB.build_brief(_full_snapshot(), prev=None)
     assert "首次运行" not in text
-    assert "昨日" in text
+    # ⚠️ 措辞随「对比对象是不是同一天」变（同日 → 上一份；跨日 → 昨日），
+    # 所以**不能**断言某个固定标签。要断言的是「上一份的值真的被用上了」。
+    assert "-2.00%" in text, (
+        "落盘的历史快照里的超额值必须出现在对比行里，"
+        "否则说明对比用的是默认值而不是磁盘上的历史"
+    )
+    assert "和上一份比变了什么" in text or "和昨天比变了什么" in text, (
+        "第四节标题必须存在"
+    )
 
 
 def test_diff_helper_semantics():
@@ -474,3 +482,211 @@ def test_refresh_status_is_not_reported_twice_as_two_tasks(brief_env):
         f"第一节把同一个 refresh 任务列了 {n_mentions} 次，"
         "读者会误以为是两件事各挂了一次"
     )
+
+
+# ── 方向性硬伤回归（2026-11-16）────────────────────────────────────────
+#
+# 背景：日报曾把「开盘成交毛超额」写成负值，并据此下结论
+# 「连成本都不用扣就已经跑不赢」。真实值是**毛超额为正、
+# 被交易成本压成负数** —— 方向写反会让读者对策略机理产生
+# 完全错误的理解。这组测试锁死「结论必须由数据决定」。
+
+
+def test_section_three_does_not_claim_gross_is_negative_when_it_is_positive(brief_env):
+    """毛超额为正时，日报不得说「连成本都不用扣就已经跑不赢」。
+
+    ⚠️ 断言技巧：不能直接用裸字符串 `not in`。
+    毛超额为正的分支里，正文会出现「**不是「连成本都不用扣就已经跑不赢」**」
+    —— 那是**否定引述**，恰恰是正确行为。用裸 `not in` 会误判失败。
+    所以这里锚定「肯定的断言句」（不含「不是」前缀的独立成句版本），
+    并单独断言否定引述存在。
+    """
+    snap = _full_snapshot()
+    # 真实口径：毛超额为正（+1.40bp/期），扣成本后才变负
+    snap["anatomy"]["r1_gross_diff"] = 0.000140
+    snap["anatomy"]["r2_gross_diff"] = 0.000140
+    text = DB.build_brief(snap, prev={})
+    sec3 = text.split("三、结果意味着什么")[1].split("四、和昨天比变了什么")[0]
+
+    # 肯定断言句（原始 bug 的措辞）不得作为独立结论出现
+    assert "**这套方法连成本都不用扣，就已经跑不赢无脑买一篮子股票了。**" not in sec3, (
+        "毛超额实测为正，日报却断言「连成本都不用扣就已经跑不赢」—— "
+        "把「毛超额为正、被成本压成负」写反了"
+    )
+    assert "从来就没跑赢过大盘" not in sec3, (
+        "毛超额为正时不得断言「从来没跑赢过大盘」"
+    )
+    # 必须有否定引述 + 真实机理说明
+    assert "不是「连成本都不用扣就已经跑不赢」" in sec3, (
+        "应当明确否掉「连成本都不用扣就已经跑不赢」这句话"
+    )
+    assert "扣掉交易成本后变成负数" in sec3, (
+        "应当说明真实机理：毛超额为正，但被交易成本吃成负数"
+    )
+    # 单位不能写错：r1_gross_diff 是「每期」值，不是年化
+    assert "/期" in sec3 and "/年 —— 是负的" not in sec3, (
+        "每期毛超额不得标成「/年」"
+    )
+
+
+def test_section_three_keeps_negative_wording_when_gross_really_is_negative(brief_env):
+    """反向锁死：毛超额确实为负时，日报必须照实说 —— 不能一律改口。
+
+    断言的是**肯定断言句**（不带「不是」前缀），与上一个测试互为反向。
+    """
+    snap = _full_snapshot()
+    snap["anatomy"]["r1_gross_diff"] = -0.000360
+    snap["anatomy"]["r2_gross_diff"] = -0.000990
+    text = DB.build_brief(snap, prev={})
+    sec3 = text.split("三、结果意味着什么")[1].split("四、和昨天比变了什么")[0]
+
+    assert "**这套方法连成本都不用扣，就已经跑不赢无脑买一篮子股票了。**" in sec3, (
+        "毛超额实测为负，日报必须照实说明，不得因为修 bug 改成相反的结论"
+    )
+    # 否定引述不应出现（因为确实为负）
+    assert "不是「连成本都不用扣就已经跑不赢」" not in sec3, (
+        "毛超额为负时不应出现否定引述"
+    )
+
+
+def test_section_five_does_not_hardcode_all_three_segments_negative(brief_env):
+    """第五段不得写死「三段一致为负」—— 真实数据 train 段为正。"""
+    snap = _full_snapshot()
+    snap["cross_segment"] = {
+        "available": True,
+        "segments": {"train": 0.0091, "validation": -0.0312, "test": -0.0203},
+        "n_segments": 3,
+        "all_negative": False,
+        "any_positive": True,
+    }
+    text = DB.build_brief(snap, prev={})
+    sec5 = text.split("五、当前能不能用")[1].split("六、主要风险是什么")[0]
+
+    assert "三段一致为负" not in sec5, (
+        "train 段实测为正（+0.91%/年），不得写死「三段一致为负」—— "
+        "写死会把结论说过头"
+    )
+    assert "符号不一致" in sec5, (
+        "分段符号不一致时必须如实说明，而不是笼统说「结构性没有超额」"
+    )
+
+
+def test_section_five_says_segments_consistent_when_all_negative(brief_env):
+    """反向锁死：三段确实都为负时，日报必须照实说。"""
+    snap = _full_snapshot()
+    snap["cross_segment"] = {
+        "available": True,
+        "segments": {"train": -0.0082, "validation": -0.0312, "test": -0.0203},
+        "n_segments": 3,
+        "all_negative": True,
+        "any_positive": False,
+    }
+    text = DB.build_brief(snap, prev={})
+    sec5 = text.split("五、当前能不能用")[1].split("六、主要风险是什么")[0]
+
+    assert "三段一致为负" in sec5, (
+        "三段确实都为负，日报必须照实说明「结构性没有超额」"
+    )
+
+
+def test_snapshot_carries_reconciliation_status(brief_env):
+    """快照必须带上闭环校验状态 —— 对账不过时日报要如实告知读者。"""
+    _write(brief_env / "signal_anatomy.json", {
+        "generated_at": "2026-11-16 10:49:04",
+        "n_periods": 143,
+        "chain_check_ok": False,
+        "r1_check": {"ok": False, "rel_err": 0.64},
+        "diff_top_minus_bench": {
+            "S1_overnight_mean": 0.00037,
+            "S2_entry_day_mean": -0.00056,
+            "R1_total_mean": 0.000146,
+            "R2_total_mean": -0.000120,
+        },
+        "verdict": {
+            "untradeable_overnight_excess_ann": 0.0186,
+            "entry_day_excess_ann": -0.0281,
+            "signal_nature": "反转型信号",
+        },
+    })
+    snap = DB.build_snapshot()
+    assert snap["anatomy"]["chain_check_ok"] is False
+    assert snap["anatomy"]["r1_check_ok"] is False
+    assert snap["anatomy"]["r1_check_rel_err"] == 0.64
+    assert snap["anatomy"]["generated_at"] == "2026-11-16 10:49:04"
+
+
+def test_brief_warns_when_reconciliation_failed(brief_env):
+    """对账失败时，日报必须提示读者该段解读只能当参考。"""
+    snap = _full_snapshot()
+    snap["anatomy"]["r1_check_ok"] = False
+    snap["anatomy"]["r1_check_rel_err"] = 0.64
+    snap["anatomy"]["chain_check_ok"] = True
+    text = DB.build_brief(snap, prev={})
+    sec3 = text.split("三、结果意味着什么")[1].split("四、和昨天比变了什么")[0]
+
+    assert "对账没有通过" in sec3, (
+        "对账失败必须在日报里如实告知，不能悄悄下结论"
+    )
+    assert "只能当作参考" in sec3
+
+
+# ------------------------------------------------------------------ 四、同日措辞
+def test_diff_same_day_uses_previous_wording():
+    """同日重跑时，措辞必须是「上一份 / 本份」，不能写「昨日」。
+
+    否则正文会自相矛盾：
+        「回测超额：与昨日相同」 + 「上一份汇报时间：2026-11-16 10:55:52」
+    —— 「昨天」明明是今天。
+    """
+    assert DB._diff(None, 0.01, same_day=True) == "无上一份可比"
+    assert DB._diff(0.01, None, same_day=True) == "无上一份可比"
+    assert DB._diff(0.01, 0.01, same_day=True) == "与上一份相同"
+    d = DB._diff(0.01, 0.02, same_day=True)
+    assert "上一份" in d and "本份" in d and "+1.00%" in d
+    assert "昨日" not in d
+
+
+def test_diff_default_behaviour_unchanged():
+    """默认（跨日）措辞不得被改动 —— 既有测试锁死了「无昨日可比」。"""
+    assert DB._diff(None, 0.01) == "无昨日可比"
+    assert DB._diff(0.01, 0.01) == "与昨日相同"
+    d = DB._diff(0.01, 0.02)
+    assert "昨日" in d and "今日" in d
+
+
+def test_same_day_helper():
+    """_same_day：比较 ts 的日期部分。"""
+    cur = {"ts": "2026-11-16 11:03:00"}
+    assert DB._same_day({"ts": "2026-11-16 10:55:52"}, cur) is True
+    assert DB._same_day({"ts": "2026-11-15 22:30:00"}, cur) is False
+    assert DB._same_day({}, cur) is False
+    assert DB._same_day(None, cur) is False
+    assert DB._same_day({"ts": "2026-11-16 10:55:52"}, None) is False
+    # ts 缺失/残缺时不得误判
+    assert DB._same_day({"ts": "2026-11-16"}, cur) is True
+    assert DB._same_day({"ts": "bad"}, cur) is False
+
+
+def test_section_four_title_matches_comparison_target(brief_env):
+    """第四节标题必须与实际对比对象一致。"""
+    snap = _full_snapshot()          # ts = 2026-11-14 09:00:00
+
+    # 跨日 → 「四、和昨天比变了什么」
+    prev = {"ts": "2026-11-13 22:30:00",
+            "oos": {"excess_annualized": -0.0130},
+            "realism": {"open_limit_excess": -0.0269},
+            "ledger": {"n_periods": 0}}
+    text = DB.build_brief(snap, prev=prev)
+    assert "四、和昨天比变了什么" in text
+    assert "与昨日相同" in text
+
+    # 同日 → 「四、和上一份比变了什么」
+    prev_same = dict(prev, ts="2026-11-14 08:55:00")
+    text2 = DB.build_brief(snap, prev=prev_same)
+    assert "四、和上一份比变了什么" in text2, (
+        "同日重跑时标题必须写「上一份」，不能写「昨天」"
+    )
+    assert "与昨日相同" not in text2, (
+        "同日重跑不得出现「与昨日相同」"
+    )
+    assert "与上一份相同" in text2

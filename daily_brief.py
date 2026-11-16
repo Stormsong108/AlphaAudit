@@ -30,6 +30,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -480,17 +481,65 @@ def build_snapshot() -> dict[str, Any]:
     if an:
         d = an.get("diff_top_minus_bench") or {}
         v = an.get("verdict") or {}
+        rc = an.get("r1_check") or {}
         snap["anatomy"] = {
             "overnight_diff": d.get("S1_overnight_mean"),
             "entry_day_diff": d.get("S2_entry_day_mean"),
             "hold_diff": d.get("S3_hold_mean"),
             "exit_day_diff": d.get("S4_exit_day_mean"),
+            # r1_gross_diff / r2_gross_diff 是**毛超额**（已扣成本前），
+            # 来自 diff_top_minus_bench（策略篮子 − 基准篮子）。
             "r1_gross_diff": d.get("R1_total_mean"),
             "r2_gross_diff": d.get("R2_total_mean"),
             "untradeable_ann": v.get("untradeable_overnight_excess_ann"),
             "entry_day_ann": v.get("entry_day_excess_ann"),
             "signal_nature": v.get("signal_nature"),
             "n_periods": an.get("n_periods"),
+            # 独立校验与 canonical 对账状态 —— 日报必须如实展示，
+            # 对账不过就不能拿这些数字下结论（闭环硬门禁）。
+            "chain_check_ok": an.get("chain_check_ok"),
+            "r1_check_ok": rc.get("ok"),
+            "r1_check_rel_err": rc.get("rel_err"),
+            "r1_check_reference": rc.get("canonical_reference"),
+            "generated_at": an.get("generated_at"),
+        }
+
+    cs = _read_json(CROSS_SEG_FILE)
+    if cs:
+        # ⚠️ 2026-11-16 修正：cross_segment_check.json 的真实结构是
+        #   result.rows[] → per_segment.{train,val,test}.excess_annualized
+        #   result.segments → 只是日期区间（不是收益值）
+        # 旧代码读 cs["segments"] 拿 excess_annualized，取不到 →
+        # 分段结论静默退化成「暂无数据」，而日报却写死了「三段一致为负」。
+        res = cs.get("result") or cs
+        rows_cs = res.get("rows") or []
+        seg_vals: dict[str, float] = {}
+        seg_dates: dict[str, list] = {}
+        if rows_cs:
+            # 优先取第一行（canonical 配置：cost_rate/hold 由训练段选出）
+            per = (rows_cs[0].get("per_segment") or {})
+            for tag in ("train", "val", "validation", "test"):
+                node = per.get(tag)
+                if isinstance(node, dict) and node.get("excess_annualized") is not None:
+                    seg_vals[tag] = float(node["excess_annualized"])
+            for tag, rng in (res.get("segments") or {}).items():
+                if isinstance(rng, list):
+                    seg_dates[tag] = rng
+        vals = list(seg_vals.values())
+        snap["cross_segment"] = {
+            "available": bool(vals),
+            "segments": seg_vals,
+            "segment_dates": seg_dates,
+            "n_segments": len(vals),
+            "all_negative": bool(vals) and all(x < 0 for x in vals),
+            "any_positive": bool(vals) and any(x > 0 for x in vals),
+            "all_same_sign": bool(vals) and (all(x < 0 for x in vals) or all(x > 0 for x in vals)),
+            "generated_at": cs.get("generated_at"),
+            # 该产物是 11-12 生成的，比其它产物旧 —— 日报要显示数据日期，
+            # 否则读者会以为它和今天的数字同源。
+            "source_mtime": datetime.fromtimestamp(
+                CROSS_SEG_FILE.stat().st_mtime
+            ).strftime("%Y-%m-%d %H:%M") if CROSS_SEG_FILE.exists() else None,
         }
 
     q = _read_json(QUEUE_FILE)
@@ -550,19 +599,36 @@ def _prev_snapshot(history: list[dict[str, Any]]) -> dict[str, Any] | None:
     return history[-1]
 
 
-def _diff(a: Any, b: Any) -> str:
-    """差值描述（b 是新值，a 是旧值）。"""
+def _diff(a: Any, b: Any, same_day: bool = False) -> str:
+    """差值描述（b 是新值，a 是旧值）。
+
+    ⚠️ 对比对象是**上一份汇报**，不一定是昨天。
+    同一天内重跑（21:00 复算 + 21:30 正式投递，或手动补跑）时，
+    若写死「昨日」，会与正文里的「上一份汇报时间：今天 HH:MM」自相矛盾。
+    所以 same_day=True 时改用「上一份 / 本份」措辞。
+    """
+    old_lbl, new_lbl = ("上一份", "本份") if same_day else ("昨日", "今日")
     if a is None or b is None:
-        return "无昨日可比"
+        return "无上一份可比" if same_day else "无昨日可比"
     try:
         d = float(b) - float(a)
     except (TypeError, ValueError):
         if a == b:
-            return "与昨日相同"
-        return f"昨日 {a} → 今日 {b}"
+            return "与上一份相同" if same_day else "与昨日相同"
+        return f"{old_lbl} {a} → {new_lbl} {b}"
     if abs(d) < 1e-12:
-        return "与昨日相同"
-    return f"昨日 {_pct(a)} → 今日 {_pct(b)}（{_pct(d)}）"
+        return "与上一份相同" if same_day else "与昨日相同"
+    return f"{old_lbl} {_pct(a)} → {new_lbl} {_pct(b)}（{_pct(d)}）"
+
+
+def _same_day(prev: dict[str, Any] | None, cur: dict[str, Any] | None) -> bool:
+    """上一份汇报是否就是**当天**的（同一天内重跑）。"""
+    if not prev or not cur:
+        return False
+    pts, cts = str(prev.get("ts") or ""), str(cur.get("ts") or "")
+    if len(pts) < 10 or len(cts) < 10:
+        return False
+    return pts[:10] == cts[:10]
 
 
 # ------------------------------------------------------------------ 汇报
@@ -711,10 +777,26 @@ def build_brief(snap: dict[str, Any] | None = None,
     L.append("  三、结果意味着什么")
     L.append("")
     if an and an.get("overnight_diff") is not None:
-        L.append("    第一，先纠正一个容易被误解的地方：这套方法**从来就没跑赢过大盘**。")
-        L.append(f"      即使用最宽松的假设（全部按收盘价成交、全部买得到），")
-        L.append(f"      超额也是 {_pct(close_ex)}/年 —— 是负的。")
-        L.append("      所以问题不是「实盘会不会把好处吃掉」，而是「这个好处本来就不存在」。")
+        # ⚠️ 2026-11-16 修正：旧版本把「毛超额是负的」写死成结论，
+        # 但真实值是**毛超额为正、被成本压成负**。方向写反会让读者
+        # 对策略机理产生完全错误的理解。现在全部按实测值动态判定方向。
+        r1_gross = an.get("r1_gross_diff")
+        r2_gross = an.get("r2_gross_diff")
+        oos_ex = oos.get("excess_annualized")
+
+        L.append("    第一，先纠正一个容易被误解的地方：")
+        if r1_gross is not None:
+            if r1_gross > 0:
+                L.append(f"      即使用最宽松的假设（全部按收盘价成交、全部买得到），")
+                L.append(f"      **毛超额是 {_pct(r1_gross)}/期（正的）** ——")
+                L.append("      也就是说，这套方法本来是能挣到一点的。"
+                         "问题出在两处：")
+                L.append("      一是它挣的这点好处**结构上吃不到**（下面第三点）；")
+                L.append("      二是**手续费把它吃掉了**，甚至吃成负数。")
+            else:
+                L.append(f"      即使用最宽松的假设（全部按收盘价成交、全部买得到），")
+                L.append(f"      超额也是 {_pct(r1_gross)}/期 —— 是负的。")
+                L.append("      所以问题不是「实盘会不会把好处吃掉」，而是「这个好处本来就不存在」。")
         L.append("")
         L.append("    第二，我把这笔收益按时间段拆开，挖到了真正的原因：")
         L.append(f"      这套信号挑出来的股票，**隔夜会跳空高开**（相对大盘 {_pct(an.get('overnight_diff'))}/期），")
@@ -728,14 +810,32 @@ def build_brief(snap: dict[str, Any] | None = None,
         L.append(f"      这项每年值 {_pct(an.get('untradeable_ann'))}，正好是两个口径超额的差。")
         L.append("")
         L.append("    第四，最硬的一条结论：")
-        L.append(f"      按真实开盘成交算，**毛超额**（还没扣手续费）就是 {_pct(an.get('r2_gross_diff'))}/期，")
-        L.append("      本身就是负的。也就是说——")
-        L.append("      **这套方法连成本都不用扣，就已经跑不赢无脑买一篮子股票了。**")
+        if r2_gross is not None:
+            if r2_gross > 0:
+                L.append(f"      按真实开盘成交算，**毛超额**（还没扣手续费）仍是 {_pct(r2_gross)}/期 —— "
+                         "**是正的**。")
+                L.append("      这点必须说清楚：**不是「连成本都不用扣就已经跑不赢」**。")
+                L.append("      真实情况是：毛超额为正，但**扣掉交易成本后变成负数**。")
+            else:
+                L.append(f"      按真实开盘成交算，**毛超额**（还没扣手续费）就是 {_pct(r2_gross)}/期，")
+                L.append("      本身就是负的。也就是说——")
+                L.append("      **这套方法连成本都不用扣，就已经跑不赢无脑买一篮子股票了。**")
         nature = (an.get("signal_nature") or "")
         if nature:
             L.append(f"      另外，{nature}。")
         L.append("")
         L.append("    第五，结论：不是「再调调参数」，是「这条路的门要先关掉」。")
+        # 闭环校验状态必须如实展示 —— 对账不过就不能下结论
+        if an.get("r1_check_ok") is False:
+            L.append("")
+            L.append("    但本轮有个数据问题必须先说明：")
+            L.append("      解剖模块与 canonical 回测引擎的毛超额**对账没有通过**"
+                     f"（相对误差 {an.get('r1_check_rel_err')}）。")
+            L.append("      在这个差值查清之前，上面这段解读**只能当作参考**，不能当结论。")
+        elif an.get("chain_check_ok") is False:
+            L.append("")
+            L.append("    独立校验（逐股连乘 vs 价格重算）没有通过，"
+                     "以上解读暂不作为结论。")
     elif close_ex is not None and openlim_ex is not None:
         L.append("    取不到成交真实性检验结果，暂时无法解读。")
     else:
@@ -743,14 +843,17 @@ def build_brief(snap: dict[str, Any] | None = None,
     L.append("")
 
     # ---------- 4. 和昨天比 ----------
-    L.append("  四、和昨天比变了什么")
+    same_day = _same_day(prev, snap)
+    L.append("  四、和昨天比变了什么" if not same_day else "  四、和上一份比变了什么")
     L.append("")
     if not prev:
         L.append("    首次运行，没有昨天可比。")
     else:
-        L.append(f"    回测超额：{_diff((prev.get('oos') or {}).get('excess_annualized'), oos.get('excess_annualized'))}")
-        L.append(f"    现实成交超额：{_diff((prev.get('realism') or {}).get('open_limit_excess'), openlim_ex)}")
-        L.append(f"    前瞻账本期数：{_diff((prev.get('ledger') or {}).get('n_periods'), n_led)}")
+        if same_day:
+            L.append(f"    （上一份汇报就在同一天内，编号见下方时间戳）")
+        L.append(f"    回测超额：{_diff((prev.get('oos') or {}).get('excess_annualized'), oos.get('excess_annualized'), same_day)}")
+        L.append(f"    现实成交超额：{_diff((prev.get('realism') or {}).get('open_limit_excess'), openlim_ex, same_day)}")
+        L.append(f"    前瞻账本期数：{_diff((prev.get('ledger') or {}).get('n_periods'), n_led, same_day)}")
         if prev.get("ts"):
             L.append(f"    上一份汇报时间：{prev.get('ts')}")
     L.append("")
@@ -769,9 +872,30 @@ def build_brief(snap: dict[str, Any] | None = None,
     oos_ex = oos.get("excess_annualized")
     L.append("      这套 11 因子的选股方法本身。回测口径就已经跑不赢大盘"
              f"（{_pct(oos_ex)}/年），")
-    L.append(f"      换成现实成交口径更差（{_pct(openlim_ex)}/年），"
-             "且训练/验证/测试三段一致为负 ——")
-    L.append("      这是「结构性没有超额」，不是「参数没调好」。")
+    L.append(f"      换成现实成交口径更差（{_pct(openlim_ex)}/年）——")
+    # ⚠️ 2026-11-16 修正：旧版本把「训练/验证/测试三段一致为负」写死。
+    # 真实数据不是这样（train 段实测为正），写死会把结论说过头。
+    # 现在按 cross_segment_check.json 的实测值动态描述。
+    cs = snap.get("cross_segment") or {}
+    if cs.get("available") and cs.get("n_segments"):
+        segs = cs.get("segments") or {}
+        parts = []
+        for tag in ("train", "validation", "test"):
+            if tag in segs and segs[tag] is not None:
+                parts.append(f"{tag} {_pct(segs[tag])}/年")
+        if parts:
+            L.append("      分段看：" + "、".join(parts) + " ——")
+        if cs.get("all_negative"):
+            L.append("      **三段一致为负**，说明这是「结构性没有超额」，不是「参数没调好」。")
+        elif cs.get("any_positive"):
+            L.append("      **三段符号不一致**（有的段为正、有的段为负），"
+                     "说明这个结果很可能来自样本内选择偏差或运气，"
+                     "而不是稳定存在的规律 —— 这种情况下更不能上实盘。")
+        else:
+            L.append("      分段结果见上。")
+    else:
+        L.append("      分段数据暂缺，无法判断一致性 —— 在补齐之前，"
+                 "同样不能给出「结构性没有超额」的定论。")
     L.append("      结论是：这套方法不具备实盘条件，只能做研究和纸面跟踪。")
     L.append("")
     L.append("    什么时候我会说「可以实盘」：")

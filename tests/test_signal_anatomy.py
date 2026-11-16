@@ -296,8 +296,10 @@ def test_r1_and_r2_are_different_calibers(panel):
 def test_basket_reports_r1_r2_and_chain_check(panel):
     """_basket 必须同时给出 R1/R2/chain_check 三个口径。
 
-    chain_check 的作用是"严格可加校验"：它等于 S1..S4 相乘的结果，
-    用来和整段收益对照 —— 对不上就说明拆解有错。
+    ⚠️ 2026-11-16 语义变更：chain_check 现在是**独立校验的最大绝对误差**
+    （不是收益值）。旧实现把「篮子层面的 S1..S4 连乘」叫 chain_check，
+    但那是拿被校验的均值自己算自己 —— 它无法发现聚合顺序错误。
+    现在 chain_check = max|逐股连乘 − 直接价格重算|，恒应 ≈ 0。
     """
     close, open_ = panel["close"], panel["open"]
     ei, xi = 2, 6
@@ -306,20 +308,21 @@ def test_basket_reports_r1_r2_and_chain_check(panel):
     b = SA._basket(close, open_, ei, xi, sel)
 
     for key in ("S1_overnight", "S2_entry_day", "S3_hold", "S4_exit_day",
-                "S5_exit_gap", "R1_total", "R2_total", "chain_check"):
+                "S5_exit_gap", "R1_total", "R2_total",
+                "chain_check", "chain_check_r1", "chain_check_r2"):
         assert key in b, f"_basket 缺少 {key}"
         assert np.isfinite(b[key]), f"{key} 不是有限数"
 
-    # chain_check 是篮子层面的 S1..S4 连乘
-    expected_chain = (
-        (1 + b["S1_overnight"])
-        * (1 + b["S2_entry_day"])
-        * (1 + b["S3_hold"])
-        * (1 + b["S4_exit_day"])
-    ) - 1.0
-    assert b["chain_check"] == pytest.approx(expected_chain, abs=1e-12)
+    # chain_check 现在是误差量，必须 ≈ 0
+    assert abs(b["chain_check"]) < 1e-9, (
+        f"chain_check={b['chain_check']} 不是 0 —— 逐股连乘与价格重算不自洽"
+    )
+    assert abs(b["chain_check_r1"]) < 1e-9
+    assert abs(b["chain_check_r2"]) < 1e-9
 
-    # R1/R2 也是各自段的连乘
+    # R1/R2 必须是**逐股连乘后取均值**（不是段均值相乘）
+    # 合成面板里每只股票相同，所以两种算法恰好相等 —— 这里只锁结构，
+    # 真正的 Jensen 回归测试见 test_basket_uses_per_stock_chaining_not_mean_of_means。
     assert b["R1_total"] == pytest.approx(
         (1 + b["S3_hold"]) * (1 + b["S4_exit_day"]) - 1.0, abs=1e-12)
     assert b["R2_total"] == pytest.approx(
@@ -327,11 +330,69 @@ def test_basket_reports_r1_r2_and_chain_check(panel):
         abs=1e-12)
 
 
-def test_basket_chain_check_matches_whole_period_return(panel):
-    """篮子层面的 chain_check 必须与"篮子整段收益"吻合（合成数据下是精确的）。
+def test_basket_uses_per_stock_chaining_not_mean_of_means():
+    """🚨 回归测试：篮子聚合必须是「先逐股连乘、再跨股平均」。
 
-    合成数据里每只股票的整段收益完全相同，所以篮子均值 == 单股值，
-    于是这个断言在篮子层面也必须精确成立 —— 段定义写错时立刻暴露。
+    旧实现是「先对每段跨股取均值、再把均值相乘」——
+        (1+mean(S3)) × (1+mean(S4)) - 1
+    这是 Jensen 误差：E[∏(1+sᵢ)] ≠ ∏(1+E[sᵢ])。
+    实测这个错误让 R1 毛超额的**符号都反了**（日报曾写成负，实际为正）。
+
+    本测试用**异质收益**的股票构造篮子：两只股票一段涨一段跌，
+    这样「均值相乘」与「逐股连乘后平均」必然给出不同结果，
+    任何退回旧实现的改动都会被这个断言抓住。
+    """
+    # 两只股票，收益完全相反 → 协方差为负 → Jensen 误差显著
+    close = np.array([
+        [100.0, 100.0],   # t=0
+        [110.0,  90.0],   # t=1
+        [121.0,  99.0],   # t=2  (ei=1 → close[1]=110/90)
+        [133.1, 108.9],   # t=3
+    ], dtype=np.float64)
+    open_ = close.copy()   # 无跳空，S1=S5=0
+    ei, xi = 1, 3
+    sel = np.array([0, 1])
+
+    b = SA._basket(close, open_, ei, xi, sel)
+
+    # 逐股真值（手工算出）
+    # 股票0: S3 = close[2]/close[1]-1 = 121/110-1 = 0.1
+    #        S4 = close[3]/close[2]-1 = 133.1/121-1 = 0.1
+    #        R1 = 1.1*1.1-1 = 0.21
+    # 股票1: S3 = 99/90-1   = 0.1
+    #        S4 = 108.9/99-1 = 0.1
+    #        R1 = 0.21
+    # 这里两只票同向，用反向收益更狠：改成股票1持有期下跌
+    close2 = close.copy()
+    close2[2, 1] = 81.0    # 90 → 81，S3 = -0.1
+    close2[3, 1] = 72.9    # S4 = 72.9/81-1 = -0.1
+    b2 = SA._basket(close2, open_, ei, xi, sel)
+
+    r1_stock0 = (121.0 / 110.0) * (133.1 / 121.0) - 1.0        # = 0.21
+    r1_stock1 = (81.0 / 90.0) * (72.9 / 81.0) - 1.0            # = -0.19
+    expected = (r1_stock0 + r1_stock1) / 2.0                    # = 0.01
+
+    wrong = ((1 + b2["S3_hold"]) * (1 + b2["S4_exit_day"])) - 1.0
+
+    assert b2["R1_total"] == pytest.approx(expected, abs=1e-12), (
+        f"R1_total={b2['R1_total']} 不是逐股连乘后平均的 {expected} —— "
+        "说明退回了「段均值相乘」的 Jensen 错误实现"
+    )
+    assert b2["R1_total"] != pytest.approx(wrong, abs=1e-6), (
+        "两种算法在本测试数据上恰好相同，测试失去鉴别力"
+    )
+    # 均值相乘会给出 0.21*(-0.19) 级别的偏差，明确不等于正确答案
+    assert abs(wrong - expected) > 1e-3, (
+        f"期望两种算法差异显著，实际 wrong={wrong} expected={expected}"
+    )
+    # 独立校验必须依然通过
+    assert abs(b2["chain_check_r1"]) < 1e-9
+
+
+def test_basket_chain_check_matches_whole_period_return(panel):
+    """chain_check 现在是**独立误差**，必须 ≈ 0（而不是等于整段收益）。
+
+    校验的独立性是关键：拿被校验的量自己算自己，等于没校验。
     """
     close, open_ = panel["close"], panel["open"]
     ei, xi = 2, 6
@@ -340,9 +401,11 @@ def test_basket_chain_check_matches_whole_period_return(panel):
     b = SA._basket(close, open_, ei, xi, sel)
     whole = float(np.mean(close[xi, sel] / close[ei - 1, sel] - 1.0))
 
-    assert b["chain_check"] == pytest.approx(whole, abs=1e-12), (
-        f"chain_check={b['chain_check']} 与整段收益 {whole} 不符 —— 拆解不自洽"
+    # 误差量必须极小；整段收益本身是 2**(xi-ei+1)-1 = 31
+    assert abs(b["chain_check"]) < 1e-9, (
+        f"chain_check={b['chain_check']} 不是 0 —— 逐股连乘与价格重算不自洽"
     )
+    assert whole > 1.0, "合成面板整段收益应远大于 1，确保校验不是碰巧通过"
 
 
 # ── 3. S1 结构上不可得（本模块最重要的结论）───────────────────────────────
@@ -590,7 +653,10 @@ def test_agg_reports_mean_and_median_for_every_key(panel):
     rows = SA._decompose(panel, score, panel["open"], spec, 0, N_DAYS)
     agg = SA._agg(rows, "top")
 
-    expected_keys = [k for k, _ in SA.SEGMENTS] + ["R1_total", "R2_total", "chain_check"]
+    expected_keys = [k for k, _ in SA.SEGMENTS] + [
+        "R1_total", "R2_total",
+        "chain_check", "chain_check_r1", "chain_check_r2",
+    ]
     for k in expected_keys:
         assert f"{k}_mean" in agg, f"聚合缺 {k}_mean"
         assert f"{k}_median" in agg, f"聚合缺 {k}_median"

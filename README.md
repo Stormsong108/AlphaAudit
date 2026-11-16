@@ -97,7 +97,7 @@ A股单笔 ≥2万 的**纯费率下限 = 10.2bp 往返**（佣金万2.5双边 +
 ## 快速开始
 
 ```bash
-python3 -m pytest tests/ -q        # 523 passed
+python3 -m pytest tests/ -q        # 本地 527 passed（无运行数据时 0 skipped）
 python3 -m pytest tests/test_overfit_audit.py -q   # 过拟合审计专项
 ```
 
@@ -137,8 +137,16 @@ python3 -m pytest tests/test_overfit_audit.py -q   # 过拟合审计专项
 > 因此 A&M **不是** PBO 的第一手来源；PBO 的第一手来源是上列 2017 年公开论文。
 > A&M 在本项目中的作用是交叉验证、Sharpe 比率与试验次数控制的教学参考。
 
-数值交叉验证时使用过一个 GPL-3.0 许可的公开参考实现，**仅作数值对照**，
+数值交叉验证时使用过 GPL-3.0 许可的公开参考实现，**仅作数值对照**，
 本仓库的代码与公式均按论文/书籍独立实现，未复制或改写其源码。
+
+- 参考仓库：<https://github.com/quantskills/skill-backtest-overfit>
+  （GPL-3.0，public；对照脚本 `scripts/deflated_sharpe.py`、
+  `scripts/pbo_cscv.py`、`scripts/purged_kfold.py`）
+- 对照方式：逐位比对数值结果，**不比对源码**。
+  PSR×4 / E[max SR]×5 / DSR×13 / MinTRL×3 / PBO×9 共 34 个案例，
+  最大差异均为 `|d| = 0.000e+00`。
+- 因 GPL-3.0 与本仓库 MIT 不兼容，该参考实现**未以任何形式进入本仓库**。
 
 ---
 

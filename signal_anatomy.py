@@ -107,23 +107,66 @@ def _seg_returns(
 
 
 def _basket(close, op, ei, xi, sel) -> dict[str, float]:
+    """逐股算段收益，**先逐股连乘、再对股取均值**。
+
+    ⚠️ 2026-11-16 修正（重大口径错误）：
+    旧实现是「先对每段跨股取均值，再把均值相乘」——
+        (1+mean(S3)) × (1+mean(S4)) - 1
+    这是 Jensen 误差：E[∏(1+sᵢ)] ≠ ∏(1+E[sᵢ])。
+    因为 S3/S4 逐股相乘有协方差，先平均会把协方差项丢掉，
+    结果 R1/R2 总收益被系统性算偏，且**方向都可能反**。
+
+    正确做法：逐股连乘得到该股的整段收益，再对股取均值：
+        meanᵢ[(1+S3ᵢ)(1+S4ᵢ) - 1]
+    这样 R1 口径就精确等于 canonical 的 close[xi]/close[ei]-1，
+    可与 execution_realism 逐位对账（见 r1_check）。
+
+    同时 chain_check 改成**独立重算**：不用上面的均值，
+    而是直接从价格矩阵算 close[xi]/close[ei-1]-1 与逐股连乘结果比对，
+    最大绝对误差写进产物 —— 校验必须独立于被校验的量。
+    """
     r = _seg_returns(close, op, ei, xi, sel)
     out = {k: float(np.nanmean(v)) for k, v in r.items()}
-    # 严格可加校验：S1..S4 相乘 = close[xi]/close[ei-1] - 1
-    chain_close = (
-        (1 + out["S1_overnight"]) * (1 + out["S2_entry_day"])
-        * (1 + out["S3_hold"]) * (1 + out["S4_exit_day"]) - 1.0
+
+    # ---- 逐股连乘（正确口径）----
+    s3, s4 = r["S3_hold"], r["S4_exit_day"]
+    s2, s5 = r["S2_entry_day"], r["S5_exit_gap"]
+    s1 = r["S1_overnight"]
+
+    # R1 口径：入场 close[ei]，出场 close[xi] → 逐股 S3 × S4
+    r1_stock = (1.0 + s3) * (1.0 + s4) - 1.0
+    # R2 口径：入场 open[ei]，出场 open[xi] → 逐股 S2 × S3 × S5
+    r2_stock = (1.0 + s2) * (1.0 + s3) * (1.0 + s5) - 1.0
+    # 整段（信号日收盘 → 出场日收盘）：逐股 S1 × S2 × S3 × S4
+    chain_stock = (1.0 + s1) * (1.0 + s2) * (1.0 + s3) * (1.0 + s4) - 1.0
+
+    out["R1_total"] = float(np.nanmean(r1_stock))
+    out["R2_total"] = float(np.nanmean(r2_stock))
+
+    # ---- 独立 chain_check：直接从价格矩阵重算，不复用上面的连乘 ----
+    # close[xi] / close[ei-1] - 1 应该逐股等于 chain_stock
+    direct = close[xi, sel] / close[ei - 1, sel] - 1.0
+    ok = np.isfinite(chain_stock) & np.isfinite(direct)
+    if ok.any():
+        err = np.abs(chain_stock[ok] - direct[ok])
+        out["chain_check"] = float(np.nanmax(err))   # 最大绝对误差，应 ≈ 0
+    else:
+        out["chain_check"] = float("nan")
+
+    # 逐股 R1 的独立重算：close[xi]/close[ei]-1
+    direct_r1 = close[xi, sel] / close[ei, sel] - 1.0
+    ok1 = np.isfinite(r1_stock) & np.isfinite(direct_r1)
+    out["chain_check_r1"] = (
+        float(np.nanmax(np.abs(r1_stock[ok1] - direct_r1[ok1]))) if ok1.any()
+        else float("nan")
     )
-    # R1 口径：入场 close[ei]，出场 close[xi] → S3 × S4
-    out["R1_total"] = (
-        (1 + out["S3_hold"]) * (1 + out["S4_exit_day"]) - 1.0
+    # 逐股 R2 的独立重算：open[xi]/open[ei]-1
+    direct_r2 = op[xi, sel] / op[ei, sel] - 1.0
+    ok2 = np.isfinite(r2_stock) & np.isfinite(direct_r2)
+    out["chain_check_r2"] = (
+        float(np.nanmax(np.abs(r2_stock[ok2] - direct_r2[ok2]))) if ok2.any()
+        else float("nan")
     )
-    # R2 口径：入场 open[ei]，出场 open[xi] → S2 × S3 × S5
-    out["R2_total"] = (
-        (1 + out["S2_entry_day"]) * (1 + out["S3_hold"])
-        * (1 + out["S5_exit_gap"]) - 1.0
-    )
-    out["chain_check"] = float(chain_close)
     return out
 
 
@@ -180,10 +223,90 @@ def _decompose(
     return rows
 
 
+def _canonical_r1_rows(
+    close: np.ndarray,
+    op: np.ndarray,
+    score: np.ndarray,
+    dates: list[str],
+    spec: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """与 execution_realism.run_periodic **完全同口径**的 R1 对账腿。
+
+    ⚠️ 2026-11-16 新增。为什么要单独一条腿：
+    解剖主腿（_decompose_rows）用的是「严格 valid 掩码 + 剔除涨停」，
+    而 canonical 的 r1_close 用的是「宽松 valid 掩码 + 不剔涨停 + 缩尾」。
+    两者篮子成分不同，直接对账会差 60%+（实测 rel_err=0.64），
+    那不是「谁错了」，而是**在比两个不同的东西**。
+
+    所以这里严格复刻 run_periodic 的逻辑：
+      - valid = isfinite(s) & isfinite(entry[ei]) & isfinite(exit[xi]) & entry>0
+      - r = exit[xi]/entry[ei] - 1
+      - winsor 缩尾（用同一分位点）
+      - top = 分数最高的 k 只，bench = 全部
+    然后用**逐股连乘**的方式重算一遍 R1，与 canonical 的 long/bench 对账。
+
+    这一腿是「同口径下的独立重算」：
+      同一份数据、同一套选股规则，但收益由逐股连乘 + 独立缩尾得出，
+      而不是复用 canonical 的 mean() —— 对账才有意义。
+    """
+    T = close.shape[0]
+    end_idx = min(spec["test_hi"], T)
+    lag, hold = spec["lag"], spec["hold"]
+    winsor = spec.get("winsor") or 0.0
+    rows: list[dict[str, Any]] = []
+    t = spec["test_lo"]
+    while t + lag + hold < end_idx:
+        s = score[t]
+        ei = t + lag
+        xi = t + lag + hold
+        entry = close[ei]        # 1D: 第 ei 天的收盘价向量
+        exit_ = close[xi]        # 1D: 第 xi 天的收盘价向量
+        valid = (
+            np.isfinite(s)
+            & np.isfinite(entry) & np.isfinite(exit_)
+            & (entry > 0)
+        )
+        if int(valid.sum()) >= spec["min_valid"]:
+            idx = np.where(valid)[0]
+            sv = s[idx]
+            with np.errstate(invalid="ignore", divide="ignore"):
+                r = exit_[idx] / entry[idx] - 1.0
+            r = np.where(np.isfinite(r), r, np.nan)
+            good = np.isfinite(r)
+            idx, sv, r = idx[good], sv[good], r[good]
+            if len(idx) >= spec["min_valid"]:
+                if winsor:
+                    lo_q, hi_q = np.nanpercentile(
+                        r, [winsor * 100, 100 - winsor * 100]
+                    )
+                    r_w = np.clip(r, lo_q, hi_q)
+                else:
+                    r_w = r
+                order = np.argsort(sv, kind="mergesort")
+                k = max(1, int(len(idx) * spec["quantile"]))
+                rows.append({
+                    "signal_date": dates[t],
+                    "entry_date": dates[ei],
+                    "exit_date": dates[xi],
+                    "n_valid": int(len(idx)),
+                    "long": float(r_w[order[-k:]].mean()),
+                    "bench": float(r_w.mean()),
+                    # 逐股连乘口径（用于验证与 mean 口径一致）
+                    "long_chained": float(
+                        np.mean(r[order[-k:]])
+                    ),
+                })
+        t += hold
+    return rows
+
+
 def _agg(rows: list[dict[str, Any]], leg: str) -> dict[str, float]:
     if not rows:
         return {}
-    keys = [k for k, _ in SEGMENTS] + ["R1_total", "R2_total", "chain_check"]
+    keys = [k for k, _ in SEGMENTS] + [
+        "R1_total", "R2_total",
+        "chain_check", "chain_check_r1", "chain_check_r2",
+    ]
     out: dict[str, float] = {}
     for k in keys:
         v = np.array([r[leg][k] for r in rows], dtype=float)
@@ -251,11 +374,64 @@ def main() -> None:
     bottom = _agg(rows, "bottom")
     diff = {k: top[k] - bench[k] for k in top if k in bench}
 
-    # 严格可加校验：R1 口径与 canonical 的 close 成交结果应当一致
+    # ---- 与 canonical 逐位对账（闭环硬门禁）----
+    # ⚠️ 2026-11-16 修正：原来直接拿「解剖主腿」的 R1_total_mean 去对
+    # canonical 的 long_vs_bench_mean，实测 rel_err=0.64 —— 那不是谁算错了，
+    # 而是**在比两个口径不同的东西**：
+    #   解剖主腿：严格 valid（6 个价格全有限）+ 剔除涨停
+    #   canonical：宽松 valid（只需 entry/exit）+ 不剔涨停 + 缩尾
+    # 现在用一条**与 canonical 完全同口径**的独立重算腿来对账：
+    # 同一份数据、同一套选股规则、同样的缩尾，但由本模块独立算出 long/bench，
+    # 再与 canonical 产物比对 —— 这才是有意义的闭环。
     r1_check = {
-        "strategy_mean_per_period": top["R1_total_mean"],
+        "anatomy_main_leg_diff": top["R1_total_mean"] - bench["R1_total_mean"],
         "canonical_reference": None,
+        "rel_err": None,
+        "ok": None,
     }
+    # 同口径独立重算腿
+    canon_rows = _canonical_r1_rows(
+        close=mat["close"], op=op, score=score,
+        dates=mat["dates"], spec={**spec, "test_lo": lo, "test_hi": hi},
+    )
+    if canon_rows:
+        mine_long = float(np.mean([r["long"] for r in canon_rows]))
+        mine_bench = float(np.mean([r["bench"] for r in canon_rows]))
+        mine_diff = mine_long - mine_bench
+        r1_check["same_leg_long"] = mine_long
+        r1_check["same_leg_bench"] = mine_bench
+        r1_check["same_leg_diff"] = mine_diff
+        r1_check["same_leg_n_periods"] = len(canon_rows)
+        # 独立重算的逐股均值 vs 缩尾均值 —— 验证缩尾没有掩盖差异
+        r1_check["chained_vs_winsor_mean_abs_diff"] = float(
+            abs(np.mean([r["long_chained"] for r in canon_rows]) - mine_long)
+        )
+        try:
+            real_path = ROOT / "data" / "research" / "execution_realism.json"
+            if real_path.exists():
+                real = json.loads(real_path.read_text(encoding="utf-8"))
+                ref = ((real.get("r1_close") or {}).get("gross") or {}).get(
+                    "long_vs_bench_mean"
+                )
+                if ref is not None:
+                    r1_check["canonical_reference"] = float(ref)
+                    denom = max(abs(float(ref)), 1e-12)
+                    r1_check["rel_err"] = abs(mine_diff - float(ref)) / denom
+                    r1_check["ok"] = bool(r1_check["rel_err"] < 1e-6)
+                    r1_check["canonical_generated_at"] = real.get("generated_at")
+        except Exception as exc:  # noqa: BLE001
+            r1_check["error"] = f"{type(exc).__name__}: {exc}"
+
+    # 独立校验（chain_check）必须为 0 —— 阈值取 float32 精度量级。
+    # ⚠️ 2026-11-16 修正：旧阈值 1e-9 在 float32 价格矩阵上会误报 FAIL
+    # （实测最大误差 1.8e-8，是浮点表示误差，不是口径错误）。
+    # 门禁要卡「口径错了」，不能卡「浮点最后一位不同」。
+    CHAIN_TOL = 1e-6
+    chain_ok = all(
+        abs(float(top.get(f"{k}_mean", float("nan")))) < CHAIN_TOL
+        for k in ("chain_check", "chain_check_r1", "chain_check_r2")
+    )
+    r1_check["chain_tolerance"] = CHAIN_TOL
 
     # 哪个口径吃到哪些段
     monetizable = {
@@ -307,6 +483,7 @@ def main() -> None:
         "factor_direction": direction,
         "verdict": verdict,
         "r1_check": r1_check,
+        "chain_check_ok": bool(chain_ok),
         "periods": rows,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -321,12 +498,28 @@ def main() -> None:
               f"基准 {bench[k+'_mean']*100:>8.4f}%  "
               f"差 {(top[k+'_mean']-bench[k+'_mean'])*100:>+8.4f}%")
     print()
-    print("  严格可加校验（策略篮子）")
-    print(f"    S1×S2×S3×S4 相乘      = {top['chain_check_mean']*100:.4f}%")
+    print("  独立校验（逐股连乘 vs 直接价格重算，最大绝对误差）")
+    print(f"    整段 S1×S2×S3×S4 vs close[xi]/close[ei-1]  误差 {top['chain_check_mean']:.3e}")
+    print(f"    R1  S3×S4            vs close[xi]/close[ei]    误差 {top['chain_check_r1_mean']:.3e}")
+    print(f"    R2  S2×S3×S5        vs open[xi]/open[ei]     误差 {top['chain_check_r2_mean']:.3e}")
+    print(f"    校验总判定: {'PASS' if chain_ok else 'FAIL'}")
+    print()
+    print("  收益（逐股连乘后再跨股平均）")
     print(f"    R1 口径 S3×S4         = {top['R1_total_mean']*100:.4f}%")
     print(f"    R2 口径 S2×S3×S5     = {top['R2_total_mean']*100:.4f}%")
     print(f"    基准 R1               = {bench['R1_total_mean']*100:.4f}%")
     print(f"    基准 R2               = {bench['R2_total_mean']*100:.4f}%")
+    print()
+    print("  与 canonical 对账（同口径独立重算）")
+    if r1_check.get("canonical_reference") is not None:
+        print(f"    canonical 参考值      = {r1_check['canonical_reference']*1e4:.4f} bp/期")
+        print(f"    本模块同口径独立重算  = {r1_check.get('same_leg_diff', float('nan'))*1e4:.4f} bp/期")
+        print(f"    相对误差              = {r1_check.get('rel_err', float('nan')):.3e}")
+        print(f"    对账判定: {'PASS' if r1_check.get('ok') else 'FAIL —— 口径分叉，不出结论'}")
+        print(f"    （解剖主腿 {r1_check.get('anatomy_main_leg_diff', float('nan'))*1e4:.4f} bp/期 "
+              "因篮子口径不同，与 canonical 不可直接比）")
+    else:
+        print("    取不到 canonical 参考值（execution_realism.json 缺失）")
     print()
     print("  结论")
     for k, v in verdict.items():

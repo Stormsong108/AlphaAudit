@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-11-15T10:27:56",
+ "generated_at": "2026-11-16T10:43:57",
  "stage": "completed",
  "n_etf": 59,
  "etf_names": [
@@ -128,7 +128,7 @@
    "slippage_bp_edge": 2.0
   },
   "spec_hash": "cce9fcabcc6bd2d419b006f1c0fcfb6426f5bc207fe097c847da5f295a3f3876",
-  "frozen_at": "2026-11-15T10:27:56",
+  "frozen_at": "2026-11-16T10:43:57",
   "selected_by": "train_excess_ann",
   "validation_excess_ann": 0.05361651215087347
  },

@@ -294,6 +294,18 @@ def _resolve_targets() -> list[tuple[str, str, str]]:
     return out
 
 
+def _should_mark_delivered(results: list[dict], dry_run: bool) -> bool:
+    """能不能写「已投递」标记。
+
+    ⚠️ dry-run 绝不写。deliver_html(dry_run=True) 返回 ok=True 的假结果，
+    若直接 `all(ok)` 判定，会误写标记 → 当晚真实投递被「最近 N 分钟内已投递」
+    静默跳过 = 少发一期日报。
+    """
+    if dry_run:
+        return False
+    return bool(results) and all(r.get("ok") for r in results)
+
+
 def deliver(text: str, *, dry_run: bool = False) -> list[dict]:
     """投递纯文本（兼容路径）。正式日报走 deliver_html。"""
     if dry_run:
@@ -581,8 +593,11 @@ def main() -> int:
         if not r.get("ok"):
             print(f"[deliver][error] {r.get('error')}", file=sys.stderr)
 
-    if results and all(r.get("ok") for r in results):
+    # ⚠️ dry-run 必须**不写**投递标记（见 _should_mark_delivered 的说明）。
+    if _should_mark_delivered(results, args.dry_run):
         _mark_delivered(day)
+    elif args.dry_run:
+        print("[deliver] dry-run：未投递，未写投递标记", file=sys.stderr)
 
     # 结果写入日志，方便复盘时追溯投递是否真的成功
     log_path = LOG_DIR / f"{day}.jsonl"
