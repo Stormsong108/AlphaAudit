@@ -132,6 +132,17 @@ STEPS: list[dict] = [
         "cmd": [sys.executable, str(ROOT / "signal_anatomy.py")],
     },
     {
+        # 因子冗余分析：11 个因子是不是其实只有少数几个独立信号？
+        # 用更少的因子合成 → 横截面排序更稳 → 换手下降 → 成本拖累下降。
+        # 依赖 oos（读 oos_latest.json 的 canonical 口径）+ cross_segment
+        # （三段超额要和它逐位对账，不一致就拒绝出结论）。
+        "key": "redundancy",
+        "title": "因子冗余分析（用更少因子降换手，补成本缺口）",
+        "min_hours": 12.0,
+        "requires": ["oos", "cross_segment"],
+        "cmd": [sys.executable, str(ROOT / "factor_redundancy.py")],
+    },
+    {
         # ETF 通道有自己的数据底座（复权、份额折算），质量门禁独立于个股通道，
         # 所以单列一步。etf_research.py 自己会**失败关闭**：质量门禁出现致命
         # 问题（假跳空等）时直接抛错，不允许「剔除坏品种后照跑」。

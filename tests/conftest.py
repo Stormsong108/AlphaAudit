@@ -66,6 +66,8 @@ _PROTECTED_GLOBS = (
     "data/research/loop_stats.json",
     "data/research/etf_overfit_audit.json",
     "data/research/cost_feasibility.json",
+    "data/research/factor_redundancy.json",
+    "data/research/factor_redundancy_frozen_spec.json",
     "data/forward/ledger.jsonl",
     "data/forward/ledger_state.json",
     "data/forward/ledger_summary.json",

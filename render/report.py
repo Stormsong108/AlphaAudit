@@ -1282,6 +1282,7 @@ def render_html(
         ("信号解剖（时段拆解）", RESEARCH_DIR / "signal_anatomy.json"),
         ("实盘就绪度体检（门禁）", RESEARCH_DIR / "live_readiness.json"),
         ("跨来源对账（同一指标多来源一致性）", RESEARCH_DIR / "cross_source_check.json"),
+        ("因子冗余分析（降换手补成本缺口）", RESEARCH_DIR / "factor_redundancy.json"),
     ):
         try:
             if _path.exists():
@@ -1317,7 +1318,8 @@ def render_html(
                             if not _stale else
                             "有 " + str(len(_stale)) + " 项溯源信息不完整："
                             + "；".join(_stale) + "。"),
-            ("五份产物算的都是同一批数据（面板截止 " + _pts[0] + "），数字可以直接互相印证。"
+            (f"{len(_prov)} 份产物算的都是同一批数据（面板截止 " + (_pts[0] if _pts else "未标注")
+             + "），数字可以直接互相印证。"
              if _pt_same and _pts else
              "注意：各产物的面板截止日不完全一致（" + "、".join(sorted(set(_pts))) + "），"
              "说明它们不是同一批数据算出来的，数字差异可能来自数据新旧而非策略变化。"),

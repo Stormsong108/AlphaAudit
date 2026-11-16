@@ -53,6 +53,7 @@ ANATOMY_FILE = ROOT / "data" / "research" / "signal_anatomy.json"
 QUEUE_FILE = STATE_DIR / "research_queue.json"
 DAILY_LOOP_FILE = STATE_DIR / "daily_loop.json"
 CROSS_SEG_FILE = ROOT / "data" / "research" / "cross_segment_check.json"
+REDUNDANCY_FILE = ROOT / "data" / "research" / "factor_redundancy.json"
 # 跨来源对账产物：同一指标在几份产物里必须算出同一个值。
 # 对账不通过 = 口径串了 = 日报不得引用具体数字。
 CROSS_SRC_FILE = ROOT / "data" / "research" / "cross_source_check.json"
@@ -483,6 +484,35 @@ def build_snapshot() -> dict[str, Any]:
             # 2026-11-14 踩坑：面板长新数据后 canonical 数字变了
             # （-2.03% → -1.30%），但产物文件还是旧的，日报照抄了过期数字。
             "generated_at": real.get("generated_at"),
+        }
+
+    red = _read_json(REDUNDANCY_FILE)
+    if red and red.get("ok"):
+        fz = red.get("frozen") or {}
+        redm = (fz.get("spec") or {})
+        imp = red.get("improvement_vs_full") or {}
+        snap["redundancy"] = {
+            "available": True,
+            "generated_at": red.get("generated_at"),
+            "panel_to": red.get("panel_to"),
+            "effective_dimension": (red.get("redundancy") or {}).get("effective_dimension"),
+            "n_factors_total": len(red.get("canonical_factors") or []),
+            "k": fz.get("k"),
+            "factor_names": fz.get("factor_names"),
+            "spec_hash": redm.get("spec_hash"),
+            "val_gate_passed": fz.get("val_gate_passed"),
+            "val_excess_annualized": (fz.get("val") or {}).get("excess_net_winsor_annualized"),
+            "test_excess_annualized": (fz.get("test") or {}).get("excess_net_winsor_annualized"),
+            "test_excess_median_annualized": (fz.get("test") or {}).get("excess_net_median_annualized"),
+            "test_excess_raw_annualized": (fz.get("test") or {}).get("excess_net_raw_annualized"),
+            "test_turnover": (fz.get("test") or {}).get("turnover"),
+            "full_test_turnover": ((red.get("full_set") or {}).get("test") or {}).get("turnover"),
+            "full_test_excess_annualized": ((red.get("full_set") or {}).get("test") or {}).get("excess_net_winsor_annualized"),
+            "full_test_excess_median_annualized": ((red.get("full_set") or {}).get("test") or {}).get("excess_net_median_annualized"),
+            "val_improvement": imp.get("val_excess_annualized_delta"),
+            "test_improvement": imp.get("test_excess_annualized_delta"),
+            "flips_on_test": (red.get("verdict") or {}).get("flips_on_test"),
+            "conclusion": (red.get("verdict") or {}).get("conclusion"),
         }
 
     led = _read_json(LEDGER_SUMMARY)
@@ -973,6 +1003,55 @@ def build_brief(snap: dict[str, Any] | None = None,
     else:
         L.append("    取不到成交真实性检验结果，暂时无法解读。")
     L.append("")
+
+    # ---------- 3.5 因子冗余（新研究：能不能用更少因子省下手续费）----------
+    rd = snap.get("redundancy") or {}
+    if rd.get("available"):
+        L.append("    另外做了一个新研究：这 11 个因子，到底有几个是真信号？")
+        L.append("")
+        ed = rd.get("effective_dimension")
+        ntot = rd.get("n_factors_total")
+        if ed is not None and ntot:
+            L.append(f"      结论是「不多」：{ntot} 个因子的有效维度只有 {ed:.2f}。")
+            L.append(f"      （满值 {ntot}.0 表示互相独立，1.0 表示其实是同一个信号换了写法。）")
+        k = rd.get("k")
+        names = rd.get("factor_names") or []
+        if k and names:
+            L.append(f"      按训练段挑出来的最优子集是 {k} 个因子：{'、'.join(names)}。")
+            L.append("      因子少 → 横截面排名更稳 → 换手下降 → 手续费少付。")
+        ft = rd.get("full_test_turnover")
+        st = rd.get("test_turnover")
+        if ft is not None and st is not None:
+            L.append(f"      效果：测试段换手从 {ft:.4f} 降到 {st:.4f}。")
+        fe = rd.get("full_test_excess_annualized")
+        se = rd.get("test_excess_annualized")
+        if fe is not None and se is not None:
+            L.append(f"      成本后年化超额（相对大盘）：全量 {fe:+.2%} → 子集 {se:+.2%}。")
+        ve = rd.get("val_excess_annualized")
+        if ve is not None:
+            L.append(f"      验证段（这一段没参与挑选，只用来判过不过）：{ve:+.2%}。")
+        med = rd.get("test_excess_median_annualized")
+        raw = rd.get("test_excess_raw_annualized")
+        fmed = rd.get("full_test_excess_median_annualized")
+        if med is not None and raw is not None:
+            L.append(f"      三个口径一起看（缩尾 {se:+.2%} / 中位 {med:+.2%} / 未缩尾 {raw:+.2%}）。")
+            if fmed is not None and med < fmed:
+                L.append(f"      注意：中位数口径比全量的 {fmed:+.2%} 还差 —— "
+                         "说明这个「转正」靠的是少数几期撑起来的，不稳，不算真翻盘。")
+            else:
+                L.append("      三个口径方向一致，不是靠少数几期撑起来的。")
+        if rd.get("flips_on_test"):
+            L.append("      这一轮算过线了，但还需要前瞻账本验证才能谈实盘。")
+        else:
+            L.append("      所以：**省得出成本，省不出 alpha**。"
+                     "补上手续费缺口之后剩下的超额仍然在 0 附近，"
+                     "离「值得上真钱」还差得远 —— 这条路暂时走不通，"
+                     "问题不在因子个数上。")
+        L.append("      风险提示：测试段这个区间本项目已经反复看过多次，"
+                 "对新想法已不是处女地，只能算旁证，不能算独立确认。")
+        if rd.get("panel_to"):
+            L.append(f"      面板截止日：{rd['panel_to']}；产物生成时间：{rd.get('generated_at')}")
+        L.append("")
 
     # ---------- 4. 和昨天比 ----------
     same_day = _same_day(prev, snap)

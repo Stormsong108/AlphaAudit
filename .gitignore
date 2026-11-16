@@ -28,6 +28,12 @@ data/research/*
 # 的门禁结果。它是日报溯源链的最后一环：日报据此决定「出不出结论」。
 # 纯研究结论，不含行情原始数据。
 !data/research/cross_source_check.json
+# 2026-11-16 加：因子冗余分析产物 + 冻结件（spec_hash）。
+# 这是「日报数字溯源链」的一环：日报要引用它给出的有效维度、换手、
+# 三段超额，并标出它的生成时间与面板截止日。
+# 纯研究结论，不含行情原始数据。
+!data/research/factor_redundancy.json
+!data/research/factor_redundancy_frozen_spec.json
 # 带时间戳的历史快照是运行产物，不进仓库
 data/research/*_2026*.json
 data/research/oos_2026*.json

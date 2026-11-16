@@ -1,0 +1,1131 @@
+{
+  "ok": true,
+  "generated_at": "2026-11-16 13:46:07",
+  "panel_to": "2026-11-13",
+  "panel": {
+    "n_codes": 1298,
+    "n_dates": 2883,
+    "from": "2015-01-02",
+    "to": "2026-11-13"
+  },
+  "segments": {
+    "train": [
+      "2015-01-02",
+      "2020-12-01"
+    ],
+    "val": [
+      "2020-12-02",
+      "2023-11-21"
+    ],
+    "test": [
+      "2023-11-22",
+      "2026-11-13"
+    ]
+  },
+  "config": {
+    "hold": 5,
+    "quantile": 0.5,
+    "lag": 1,
+    "cost_rate": 0.003,
+    "objectives": [
+      "gross",
+      "net",
+      "breakeven"
+    ],
+    "meaningful_edge": 0.003
+  },
+  "canonical_factors": [
+    "ma_dev_60",
+    "low_vol",
+    "atr_ratio",
+    "mom_20",
+    "ma_dev_20",
+    "turnover_trend",
+    "mom_60",
+    "rsi_14",
+    "rev_5",
+    "vol_ratio",
+    "updown_ratio"
+  ],
+  "cross_check": {
+    "checked": true,
+    "ok": true,
+    "gross_diff": 0.0,
+    "turnover_diff": 0.0,
+    "detail": "重算毛超额 0.0004061261659375865 vs canonical 0.0004061261659375865；重算换手 0.2211032229875992 vs canonical 0.2211032229875992"
+  },
+  "segment_check": {
+    "checked": true,
+    "ok": true,
+    "rows": {
+      "train": {
+        "ok": true,
+        "excess_diff": 6.071532165918825e-17,
+        "gross_diff": 0.0,
+        "turnover_diff": 0.0
+      },
+      "val": {
+        "ok": true,
+        "excess_diff": 6.938893903907228e-17,
+        "gross_diff": 0.0,
+        "turnover_diff": 0.0
+      },
+      "test": {
+        "ok": true,
+        "excess_diff": 3.9898639947466563e-17,
+        "gross_diff": 0.0,
+        "turnover_diff": 0.0
+      }
+    },
+    "source": "data/research/cross_segment_check.json（cost=0.0030, hold=5）"
+  },
+  "redundancy": {
+    "ok": true,
+    "n_days": 1379,
+    "names": [
+      "ma_dev_60",
+      "low_vol",
+      "atr_ratio",
+      "mom_20",
+      "ma_dev_20",
+      "turnover_trend",
+      "mom_60",
+      "rsi_14",
+      "rev_5",
+      "vol_ratio",
+      "updown_ratio"
+    ],
+    "matrix": [
+      [
+        1.0,
+        -0.20439499287828697,
+        0.21296695200681143,
+        0.7569189437348475,
+        0.6939536552096136,
+        0.5417033973543376,
+        0.7707200521359137,
+        -0.8279144467011083,
+        -0.39183375268037635,
+        0.3837090027581006,
+        0.45287224995004605
+      ],
+      [
+        -0.20439499287828697,
+        1.0,
+        -0.8950379716604759,
+        -0.16916857231307944,
+        -0.08157778143474796,
+        -0.27102365858136274,
+        -0.24038228496763342,
+        0.1655014470423108,
+        0.026388625921004015,
+        -0.21318201495985223,
+        -0.14638393614483844
+      ],
+      [
+        0.21296695200681143,
+        -0.8950379716604759,
+        1.0,
+        0.18053352960836774,
+        0.038716240567337364,
+        0.30789214597969694,
+        0.27455863292270105,
+        -0.13879741364061263,
+        0.035306363074721105,
+        0.22547923162147807,
+        0.1507089305414849
+      ],
+      [
+        0.7569189437348475,
+        -0.16916857231307944,
+        0.18053352960836774,
+        1.0,
+        0.7216673904161367,
+        0.5410318755963782,
+        0.4862366748063344,
+        -0.7473613105590661,
+        -0.4225600454731618,
+        0.4111158920753341,
+        0.5250597695529088
+      ],
+      [
+        0.6939536552096136,
+        -0.08157778143474796,
+        0.038716240567337364,
+        0.7216673904161367,
+        1.0,
+        0.4341634289038729,
+        0.3594292498473792,
+        -0.8799669174428646,
+        -0.6478947480358186,
+        0.4249800291961181,
+        0.4945103660379559
+      ],
+      [
+        0.5417033973543376,
+        -0.27102365858136274,
+        0.30789214597969694,
+        0.5410318755963782,
+        0.4341634289038729,
+        1.0,
+        0.3399528774909952,
+        -0.5069597989609489,
+        -0.192748385456126,
+        0.8506629629271282,
+        0.30234060252625705
+      ],
+      [
+        0.7707200521359137,
+        -0.24038228496763342,
+        0.27455863292270105,
+        0.4862366748063344,
+        0.3594292498473792,
+        0.3399528774909952,
+        1.0,
+        -0.5282284731115997,
+        -0.2237153148988177,
+        0.19042764401358825,
+        0.28498770855300265
+      ],
+      [
+        -0.8279144467011083,
+        0.1655014470423108,
+        -0.13879741364061263,
+        -0.7473613105590661,
+        -0.8799669174428646,
+        -0.5069597989609489,
+        -0.5282284731115997,
+        1.0,
+        0.5683264468980193,
+        -0.4474216282023125,
+        -0.546190346903621
+      ],
+      [
+        -0.39183375268037635,
+        0.026388625921004015,
+        0.035306363074721105,
+        -0.4225600454731618,
+        -0.6478947480358186,
+        -0.192748385456126,
+        -0.2237153148988177,
+        0.5683264468980193,
+        1.0,
+        -0.3142334236406322,
+        -0.2858736615800772
+      ],
+      [
+        0.3837090027581006,
+        -0.21318201495985223,
+        0.22547923162147807,
+        0.4111158920753341,
+        0.4249800291961181,
+        0.8506629629271282,
+        0.19042764401358825,
+        -0.4474216282023125,
+        -0.3142334236406322,
+        1.0,
+        0.24582754781172184
+      ],
+      [
+        0.45287224995004605,
+        -0.14638393614483844,
+        0.1507089305414849,
+        0.5250597695529088,
+        0.4945103660379559,
+        0.30234060252625705,
+        0.28498770855300265,
+        -0.546190346903621,
+        -0.2858736615800772,
+        0.24582754781172184,
+        1.0
+      ]
+    ],
+    "effective_dimension": 3.5622371818370087,
+    "eigenvalues": [
+      0.07482664743043355,
+      0.09619416207287308,
+      0.10147073889243294,
+      0.11957260861685493,
+      0.27179690947014146,
+      0.4165152335349464,
+      0.7156769083682707,
+      0.8818397671619626,
+      1.1715508009384785,
+      1.924063381740868,
+      5.2264928417727425
+    ],
+    "max_abs": 0.8950379716604759,
+    "max_abs_pair": [
+      "low_vol",
+      "atr_ratio"
+    ],
+    "mean_abs": 0.3949363772238059,
+    "n_pairs": 55,
+    "n_pairs_ge_0_5": 17,
+    "n_pairs_ge_0_7": 8,
+    "top_pairs": [
+      {
+        "a": "low_vol",
+        "b": "atr_ratio",
+        "rho": -0.8950379716604759
+      },
+      {
+        "a": "ma_dev_20",
+        "b": "rsi_14",
+        "rho": -0.8799669174428646
+      },
+      {
+        "a": "turnover_trend",
+        "b": "vol_ratio",
+        "rho": 0.8506629629271282
+      },
+      {
+        "a": "ma_dev_60",
+        "b": "rsi_14",
+        "rho": -0.8279144467011083
+      },
+      {
+        "a": "ma_dev_60",
+        "b": "mom_60",
+        "rho": 0.7707200521359137
+      },
+      {
+        "a": "ma_dev_60",
+        "b": "mom_20",
+        "rho": 0.7569189437348475
+      },
+      {
+        "a": "mom_20",
+        "b": "rsi_14",
+        "rho": -0.7473613105590661
+      },
+      {
+        "a": "mom_20",
+        "b": "ma_dev_20",
+        "rho": 0.7216673904161367
+      }
+    ]
+  },
+  "full_set": {
+    "train": {
+      "ok": true,
+      "n_periods": 285,
+      "gross_per_period": 0.0005231513837273444,
+      "gross_ls_per_period": 0.001038869445233133,
+      "turnover": 0.2283714707101598,
+      "breakeven_cost": 0.0022907913238922376,
+      "breakeven_cost_long_short": 0.0022745166942319726,
+      "hit_rate_vs_bench_gross": 0.5263157894736842,
+      "long_absolute_annualized": 0.1899021028592931,
+      "benchmark_annualized": 0.19806503949081117,
+      "excess_net_winsor_per_period": -0.00016196302840313512,
+      "excess_net_winsor_annualized": -0.008162936631518009,
+      "excess_net_winsor_median_annualized": -0.021280026200793948,
+      "excess_net_winsor_hit_rate": 0.47368421052631576,
+      "excess_net_median_per_period": 0.00045469328898036047,
+      "excess_net_median_annualized": 0.022916541764610165,
+      "excess_net_median_median_annualized": 0.005265823921790488,
+      "excess_net_median_hit_rate": 0.5157894736842106,
+      "excess_net_raw_per_period": 8.730041418640488e-05,
+      "excess_net_raw_annualized": 0.0043999408749948055,
+      "excess_net_raw_median_annualized": -0.0022571631195076195,
+      "excess_net_raw_hit_rate": 0.48771929824561405
+    },
+    "val": {
+      "ok": true,
+      "n_periods": 143,
+      "gross_per_period": -8.638389226124925e-05,
+      "gross_ls_per_period": -0.00016404387103226436,
+      "turnover": 0.22115911278643124,
+      "breakeven_cost": -0.0003905961240885804,
+      "breakeven_cost_long_short": -0.0003708729632829512,
+      "hit_rate_vs_bench_gross": 0.5244755244755245,
+      "long_absolute_annualized": 0.017499866455460537,
+      "benchmark_annualized": 0.05529287247873582,
+      "excess_net_winsor_per_period": -0.0007498612306205428,
+      "excess_net_winsor_annualized": -0.03779300602327536,
+      "excess_net_winsor_median_annualized": -0.00519263238905113,
+      "excess_net_winsor_hit_rate": 0.4965034965034965,
+      "excess_net_median_per_period": 0.00015364773865490918,
+      "excess_net_median_annualized": 0.007743846028207423,
+      "excess_net_median_median_annualized": -0.0021108926029528617,
+      "excess_net_median_hit_rate": 0.4965034965034965,
+      "excess_net_raw_per_period": -0.000489814037365322,
+      "excess_net_raw_annualized": -0.024686627483212226,
+      "excess_net_raw_median_annualized": 0.017860799009149782,
+      "excess_net_raw_hit_rate": 0.5174825174825175
+    },
+    "test": {
+      "ok": true,
+      "n_periods": 143,
+      "gross_per_period": 0.00040612616593758646,
+      "gross_ls_per_period": 0.0008209962478944577,
+      "turnover": 0.22110322298759919,
+      "breakeven_cost": 0.0018368170325602376,
+      "breakeven_cost_long_short": 0.001856590412389656,
+      "hit_rate_vs_bench_gross": 0.5174825174825175,
+      "long_absolute_annualized": 0.14779151747007227,
+      "benchmark_annualized": 0.16075356602254287,
+      "excess_net_winsor_per_period": -0.00025718350302521113,
+      "excess_net_winsor_annualized": -0.01296204855247064,
+      "excess_net_winsor_median_annualized": -0.0214437494522952,
+      "excess_net_winsor_hit_rate": 0.46153846153846156,
+      "excess_net_median_per_period": 0.001317948514963338,
+      "excess_net_median_annualized": 0.06642460515415223,
+      "excess_net_median_median_annualized": 0.010829054028054945,
+      "excess_net_median_hit_rate": 0.5104895104895105,
+      "excess_net_raw_per_period": 8.60028442587424e-06,
+      "excess_net_raw_annualized": 0.0004334543350640617,
+      "excess_net_raw_median_annualized": -0.00795923370843697,
+      "excess_net_raw_hit_rate": 0.4825174825174825
+    },
+    "train_ic": {
+      "ok": true,
+      "ic_mean": 0.04197080351212585,
+      "ic_t": 4.7237325744330185,
+      "ic_n": 286,
+      "ic_hit": 0.6503496503496503
+    }
+  },
+  "paths": {
+    "gross": [
+      {
+        "k": 1,
+        "added": "ma_dev_60",
+        "set": [
+          "ma_dev_60"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0011822717080135947,
+        "turnover": 0.17418889342071261,
+        "breakeven_cost": 0.006787296737445213,
+        "excess_net_mean_per_period": 0.0006597050277514571,
+        "excess_net_median_per_period": 0.0006721544549640251,
+        "excess_net_raw_per_period": 0.0010086275398025779,
+        "excess_net_winsor_annualized": 0.033249133398673435,
+        "excess_net_median_annualized": 0.03387658453018687,
+        "excess_net_raw_annualized": 0.05083482800604992,
+        "excess_net_winsor_hit_rate": 0.5018181818181818,
+        "long_absolute_annualized": 0.14856026825514684
+      },
+      {
+        "k": 2,
+        "added": "turnover_trend",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0012192818046486231,
+        "turnover": 0.18055775460416285,
+        "breakeven_cost": 0.006752863134134877,
+        "excess_net_mean_per_period": 0.0006776085408361347,
+        "excess_net_median_per_period": 0.0006620730983534826,
+        "excess_net_raw_per_period": 0.001022194455227679,
+        "excess_net_winsor_annualized": 0.03415147045814119,
+        "excess_net_median_annualized": 0.03336848415701552,
+        "excess_net_raw_annualized": 0.05151860054347502,
+        "excess_net_winsor_hit_rate": 0.49818181818181817,
+        "long_absolute_annualized": 0.1494626053146146
+      },
+      {
+        "k": 3,
+        "added": "mom_60",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0012039023226411557,
+        "turnover": 0.16501551650522256,
+        "breakeven_cost": 0.007295691630326494,
+        "excess_net_mean_per_period": 0.000708855773125488,
+        "excess_net_median_per_period": 0.0008517473838325546,
+        "excess_net_raw_per_period": 0.001059372720026711,
+        "excess_net_winsor_annualized": 0.03572633096552459,
+        "excess_net_median_annualized": 0.04292806814516075,
+        "excess_net_raw_annualized": 0.05339238508934623,
+        "excess_net_winsor_hit_rate": 0.5163636363636364,
+        "long_absolute_annualized": 0.151037465821998
+      },
+      {
+        "k": 4,
+        "added": "mom_20",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20"
+        ],
+        "n_periods": 282,
+        "gross_per_period": 0.0010811214649326278,
+        "turnover": 0.1804807024372684,
+        "breakeven_cost": 0.005990233029530704,
+        "excess_net_mean_per_period": 0.0005396793576208224,
+        "excess_net_median_per_period": 0.0007729899556894622,
+        "excess_net_raw_per_period": 0.0008935318292457424,
+        "excess_net_winsor_annualized": 0.02719983962408945,
+        "excess_net_median_annualized": 0.038958693766748896,
+        "excess_net_raw_annualized": 0.045034004193985414,
+        "excess_net_winsor_hit_rate": 0.5177304964539007,
+        "long_absolute_annualized": 0.2073802004012823
+      },
+      {
+        "k": 5,
+        "added": "ma_dev_20",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20"
+        ],
+        "n_periods": 283,
+        "gross_per_period": 0.0010375309238835487,
+        "turnover": 0.2023205419332756,
+        "breakeven_cost": 0.005128154135854983,
+        "excess_net_mean_per_period": 0.0004305692980837222,
+        "excess_net_median_per_period": 0.0006229984375211823,
+        "excess_net_raw_per_period": 0.0007557296552059816,
+        "excess_net_winsor_annualized": 0.021700692623419598,
+        "excess_net_median_annualized": 0.031399121251067585,
+        "excess_net_raw_annualized": 0.03808877462238147,
+        "excess_net_winsor_hit_rate": 0.519434628975265,
+        "long_absolute_annualized": 0.19925580423239722
+      },
+      {
+        "k": 6,
+        "added": "low_vol",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol"
+        ],
+        "n_periods": 283,
+        "gross_per_period": 0.001046419085882302,
+        "turnover": 0.1932235721156388,
+        "breakeven_cost": 0.005415587106815571,
+        "excess_net_mean_per_period": 0.0004667483695353854,
+        "excess_net_median_per_period": 0.0008693716948911442,
+        "excess_net_raw_per_period": 0.0007449206413012366,
+        "excess_net_winsor_annualized": 0.023524117824583423,
+        "excess_net_median_annualized": 0.04381633342251366,
+        "excess_net_raw_annualized": 0.037544000321582324,
+        "excess_net_winsor_hit_rate": 0.5123674911660777,
+        "long_absolute_annualized": 0.2010792294335611
+      },
+      {
+        "k": 7,
+        "added": "vol_ratio",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "vol_ratio"
+        ],
+        "n_periods": 283,
+        "gross_per_period": 0.0010216794451185839,
+        "turnover": 0.20668096622761936,
+        "breakeven_cost": 0.004943268186550861,
+        "excess_net_mean_per_period": 0.0004016365464357258,
+        "excess_net_median_per_period": 0.0007748530104277065,
+        "excess_net_raw_per_period": 0.0006782340682310839,
+        "excess_net_winsor_annualized": 0.02024248194036058,
+        "excess_net_median_annualized": 0.039052591725556404,
+        "excess_net_raw_annualized": 0.03418299703884663,
+        "excess_net_winsor_hit_rate": 0.5123674911660777,
+        "long_absolute_annualized": 0.19779759354933824
+      },
+      {
+        "k": 8,
+        "added": "rsi_14",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "vol_ratio",
+          "rsi_14"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0009085913272307752,
+        "turnover": 0.2139564156035003,
+        "breakeven_cost": 0.004246618754889586,
+        "excess_net_mean_per_period": 0.00026672208042027444,
+        "excess_net_median_per_period": 0.0005980276231847238,
+        "excess_net_raw_per_period": 0.0005395419592836476,
+        "excess_net_winsor_annualized": 0.013442792853181831,
+        "excess_net_median_annualized": 0.030140592208510078,
+        "excess_net_raw_annualized": 0.027192914747895838,
+        "excess_net_winsor_hit_rate": 0.5176056338028169,
+        "long_absolute_annualized": 0.18523964006406443
+      },
+      {
+        "k": 9,
+        "added": "atr_ratio",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "vol_ratio",
+          "rsi_14",
+          "atr_ratio"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0008152417450336624,
+        "turnover": 0.20030052549529798,
+        "breakeven_cost": 0.004070092891757291,
+        "excess_net_mean_per_period": 0.00021434016854776834,
+        "excess_net_median_per_period": 0.0006863631466874356,
+        "excess_net_raw_per_period": 0.0004783081846833667,
+        "excess_net_winsor_annualized": 0.010802744494807524,
+        "excess_net_median_annualized": 0.034592702593046754,
+        "excess_net_raw_annualized": 0.02410673250804168,
+        "excess_net_winsor_hit_rate": 0.5140845070422535,
+        "long_absolute_annualized": 0.1825995917056901
+      },
+      {
+        "k": 10,
+        "added": "updown_ratio",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "vol_ratio",
+          "rsi_14",
+          "atr_ratio",
+          "updown_ratio"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0007701658411906622,
+        "turnover": 0.20442780506337208,
+        "breakeven_cost": 0.0037674221515606103,
+        "excess_net_mean_per_period": 0.0001568824260005462,
+        "excess_net_median_per_period": 0.0006144034223353186,
+        "excess_net_raw_per_period": 0.0004279042238365966,
+        "excess_net_winsor_annualized": 0.007906874270427529,
+        "excess_net_median_annualized": 0.030965932485700058,
+        "excess_net_raw_annualized": 0.021566372881364468,
+        "excess_net_winsor_hit_rate": 0.4859154929577465,
+        "long_absolute_annualized": 0.1797037214813101
+      },
+      {
+        "k": 11,
+        "added": "rev_5",
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "vol_ratio",
+          "rsi_14",
+          "atr_ratio",
+          "updown_ratio",
+          "rev_5"
+        ],
+        "n_periods": 285,
+        "gross_per_period": 0.0005231513837273444,
+        "turnover": 0.2283714707101598,
+        "breakeven_cost": 0.0022907913238922376,
+        "excess_net_mean_per_period": -0.00016196302840313512,
+        "excess_net_median_per_period": 0.00045469328898036047,
+        "excess_net_raw_per_period": 8.730041418640488e-05,
+        "excess_net_winsor_annualized": -0.008162936631518009,
+        "excess_net_median_annualized": 0.022916541764610165,
+        "excess_net_raw_annualized": 0.0043999408749948055,
+        "excess_net_winsor_hit_rate": 0.47368421052631576,
+        "long_absolute_annualized": 0.1899021028592931
+      }
+    ],
+    "net": [],
+    "breakeven": [
+      {
+        "k": 1,
+        "added": "ma_dev_60",
+        "set": [
+          "ma_dev_60"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0011822717080135947,
+        "turnover": 0.17418889342071261,
+        "breakeven_cost": 0.006787296737445213,
+        "excess_net_mean_per_period": 0.0006597050277514571,
+        "excess_net_median_per_period": 0.0006721544549640251,
+        "excess_net_raw_per_period": 0.0010086275398025779,
+        "excess_net_winsor_annualized": 0.033249133398673435,
+        "excess_net_median_annualized": 0.03387658453018687,
+        "excess_net_raw_annualized": 0.05083482800604992,
+        "excess_net_winsor_hit_rate": 0.5018181818181818,
+        "long_absolute_annualized": 0.14856026825514684
+      },
+      {
+        "k": 2,
+        "added": "mom_60",
+        "set": [
+          "ma_dev_60",
+          "mom_60"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0010451037518553908,
+        "turnover": 0.15389797100875607,
+        "breakeven_cost": 0.00679088713779033,
+        "excess_net_mean_per_period": 0.0005834098388291228,
+        "excess_net_median_per_period": 0.0007935614826896183,
+        "excess_net_raw_per_period": 0.0009616811278173067,
+        "excess_net_winsor_annualized": 0.029403855876987788,
+        "excess_net_median_annualized": 0.03999549872755676,
+        "excess_net_raw_annualized": 0.048468728841992256,
+        "excess_net_winsor_hit_rate": 0.49818181818181817,
+        "long_absolute_annualized": 0.14471499073346128
+      },
+      {
+        "k": 3,
+        "added": "turnover_trend",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend"
+        ],
+        "n_periods": 275,
+        "gross_per_period": 0.0012039023226411557,
+        "turnover": 0.16501551650522256,
+        "breakeven_cost": 0.007295691630326494,
+        "excess_net_mean_per_period": 0.000708855773125488,
+        "excess_net_median_per_period": 0.0008517473838325546,
+        "excess_net_raw_per_period": 0.001059372720026711,
+        "excess_net_winsor_annualized": 0.03572633096552459,
+        "excess_net_median_annualized": 0.04292806814516075,
+        "excess_net_raw_annualized": 0.05339238508934623,
+        "excess_net_winsor_hit_rate": 0.5163636363636364,
+        "long_absolute_annualized": 0.151037465821998
+      },
+      {
+        "k": 4,
+        "added": "mom_20",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20"
+        ],
+        "n_periods": 282,
+        "gross_per_period": 0.0010811214649326278,
+        "turnover": 0.1804807024372684,
+        "breakeven_cost": 0.005990233029530704,
+        "excess_net_mean_per_period": 0.0005396793576208224,
+        "excess_net_median_per_period": 0.0007729899556894622,
+        "excess_net_raw_per_period": 0.0008935318292457424,
+        "excess_net_winsor_annualized": 0.02719983962408945,
+        "excess_net_median_annualized": 0.038958693766748896,
+        "excess_net_raw_annualized": 0.045034004193985414,
+        "excess_net_winsor_hit_rate": 0.5177304964539007,
+        "long_absolute_annualized": 0.2073802004012823
+      },
+      {
+        "k": 5,
+        "added": "ma_dev_20",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20"
+        ],
+        "n_periods": 283,
+        "gross_per_period": 0.0010375309238835487,
+        "turnover": 0.2023205419332756,
+        "breakeven_cost": 0.005128154135854983,
+        "excess_net_mean_per_period": 0.0004305692980837222,
+        "excess_net_median_per_period": 0.0006229984375211823,
+        "excess_net_raw_per_period": 0.0007557296552059816,
+        "excess_net_winsor_annualized": 0.021700692623419598,
+        "excess_net_median_annualized": 0.031399121251067585,
+        "excess_net_raw_annualized": 0.03808877462238147,
+        "excess_net_winsor_hit_rate": 0.519434628975265,
+        "long_absolute_annualized": 0.19925580423239722
+      },
+      {
+        "k": 6,
+        "added": "low_vol",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol"
+        ],
+        "n_periods": 283,
+        "gross_per_period": 0.001046419085882302,
+        "turnover": 0.1932235721156388,
+        "breakeven_cost": 0.005415587106815571,
+        "excess_net_mean_per_period": 0.0004667483695353854,
+        "excess_net_median_per_period": 0.0008693716948911442,
+        "excess_net_raw_per_period": 0.0007449206413012366,
+        "excess_net_winsor_annualized": 0.023524117824583423,
+        "excess_net_median_annualized": 0.04381633342251366,
+        "excess_net_raw_annualized": 0.037544000321582324,
+        "excess_net_winsor_hit_rate": 0.5123674911660777,
+        "long_absolute_annualized": 0.2010792294335611
+      },
+      {
+        "k": 7,
+        "added": "atr_ratio",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "atr_ratio"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0008764101475240918,
+        "turnover": 0.1757382890352244,
+        "breakeven_cost": 0.004987018778522574,
+        "excess_net_mean_per_period": 0.00034919528041841874,
+        "excess_net_median_per_period": 0.0010094419860731839,
+        "excess_net_raw_per_period": 0.0006153335211398754,
+        "excess_net_winsor_annualized": 0.017599442133088304,
+        "excess_net_median_annualized": 0.05087587609808846,
+        "excess_net_raw_annualized": 0.03101280946544972,
+        "excess_net_winsor_hit_rate": 0.5352112676056338,
+        "long_absolute_annualized": 0.18939628934397088
+      },
+      {
+        "k": 8,
+        "added": "rsi_14",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "atr_ratio",
+          "rsi_14"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0008763844128050915,
+        "turnover": 0.19031222253930505,
+        "breakeven_cost": 0.004604982281808476,
+        "excess_net_mean_per_period": 0.00030544774518717616,
+        "excess_net_median_per_period": 0.0007676101919285313,
+        "excess_net_raw_per_period": 0.0005702672524244864,
+        "excess_net_winsor_annualized": 0.015394566357433678,
+        "excess_net_median_annualized": 0.038687553673197976,
+        "excess_net_raw_annualized": 0.028741469522194116,
+        "excess_net_winsor_hit_rate": 0.528169014084507,
+        "long_absolute_annualized": 0.18719141356831623
+      },
+      {
+        "k": 9,
+        "added": "updown_ratio",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "atr_ratio",
+          "rsi_14",
+          "updown_ratio"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0008276282272367261,
+        "turnover": 0.19662929175474111,
+        "breakeven_cost": 0.004209079023022878,
+        "excess_net_mean_per_period": 0.0002377403519725029,
+        "excess_net_median_per_period": 0.0007227430316467402,
+        "excess_net_raw_per_period": 0.0005054417104593821,
+        "excess_net_winsor_annualized": 0.011982113739414147,
+        "excess_net_median_annualized": 0.0364262487949957,
+        "excess_net_raw_annualized": 0.02547426220715286,
+        "excess_net_winsor_hit_rate": 0.5105633802816901,
+        "long_absolute_annualized": 0.18377896095029675
+      },
+      {
+        "k": 10,
+        "added": "vol_ratio",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "atr_ratio",
+          "rsi_14",
+          "updown_ratio",
+          "vol_ratio"
+        ],
+        "n_periods": 284,
+        "gross_per_period": 0.0007701658411906622,
+        "turnover": 0.20442780506337208,
+        "breakeven_cost": 0.0037674221515606103,
+        "excess_net_mean_per_period": 0.0001568824260005462,
+        "excess_net_median_per_period": 0.0006144034223353186,
+        "excess_net_raw_per_period": 0.0004279042238365966,
+        "excess_net_winsor_annualized": 0.007906874270427529,
+        "excess_net_median_annualized": 0.030965932485700058,
+        "excess_net_raw_annualized": 0.021566372881364468,
+        "excess_net_winsor_hit_rate": 0.4859154929577465,
+        "long_absolute_annualized": 0.1797037214813101
+      },
+      {
+        "k": 11,
+        "added": "rev_5",
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend",
+          "mom_20",
+          "ma_dev_20",
+          "low_vol",
+          "atr_ratio",
+          "rsi_14",
+          "updown_ratio",
+          "vol_ratio",
+          "rev_5"
+        ],
+        "n_periods": 285,
+        "gross_per_period": 0.0005231513837273444,
+        "turnover": 0.2283714707101598,
+        "breakeven_cost": 0.0022907913238922376,
+        "excess_net_mean_per_period": -0.00016196302840313512,
+        "excess_net_median_per_period": 0.00045469328898036047,
+        "excess_net_raw_per_period": 8.730041418640488e-05,
+        "excess_net_winsor_annualized": -0.008162936631518009,
+        "excess_net_median_annualized": 0.022916541764610165,
+        "excess_net_raw_annualized": 0.0043999408749948055,
+        "excess_net_winsor_hit_rate": 0.47368421052631576,
+        "long_absolute_annualized": 0.1899021028592931
+      }
+    ]
+  },
+  "frozen": {
+    "spec": {
+      "objective": "breakeven",
+      "k": 3,
+      "factor_names": [
+        "ma_dev_60",
+        "mom_60",
+        "turnover_trend"
+      ],
+      "signs": {
+        "ma_dev_60": -1.0,
+        "mom_60": -1.0,
+        "turnover_trend": -1.0
+      },
+      "hold": 5,
+      "quantile": 0.5,
+      "lag": 1,
+      "cost_rate": 0.003,
+      "selection_segment": "train",
+      "rule": "训练段成本后超额（相对基准）最高者；并列按换手低→因子少",
+      "spec_hash": "8a7a533c0c51e83b6665001e2cefb5e7ad88fd268749acc73f7ef2f85b8cc6be"
+    },
+    "path": "breakeven",
+    "k": 3,
+    "factor_names": [
+      "ma_dev_60",
+      "mom_60",
+      "turnover_trend"
+    ],
+    "train_metrics": {
+      "k": 3,
+      "added": "turnover_trend",
+      "set": [
+        "ma_dev_60",
+        "mom_60",
+        "turnover_trend"
+      ],
+      "n_periods": 275,
+      "gross_per_period": 0.0012039023226411557,
+      "turnover": 0.16501551650522256,
+      "breakeven_cost": 0.007295691630326494,
+      "excess_net_mean_per_period": 0.000708855773125488,
+      "excess_net_median_per_period": 0.0008517473838325546,
+      "excess_net_raw_per_period": 0.001059372720026711,
+      "excess_net_winsor_annualized": 0.03572633096552459,
+      "excess_net_median_annualized": 0.04292806814516075,
+      "excess_net_raw_annualized": 0.05339238508934623,
+      "excess_net_winsor_hit_rate": 0.5163636363636364,
+      "long_absolute_annualized": 0.151037465821998
+    },
+    "val": {
+      "ok": true,
+      "n_periods": 143,
+      "gross_per_period": 0.0002744886211359635,
+      "gross_ls_per_period": 0.0005500146225817311,
+      "turnover": 0.15276417601242612,
+      "breakeven_cost": 0.001796812762657366,
+      "breakeven_cost_long_short": 0.0018002081277779154,
+      "hit_rate_vs_bench_gross": 0.5174825174825175,
+      "long_absolute_annualized": 0.04687451757499207,
+      "benchmark_annualized": 0.056138234482818364,
+      "excess_net_winsor_per_period": -0.000183803906901315,
+      "excess_net_winsor_annualized": -0.009263716907826276,
+      "excess_net_winsor_median_annualized": 0.01281761884889388,
+      "excess_net_winsor_hit_rate": 0.5104895104895105,
+      "excess_net_median_per_period": 0.00032365601339054737,
+      "excess_net_median_annualized": 0.016312263074883586,
+      "excess_net_median_median_annualized": 0.014776366874051382,
+      "excess_net_median_hit_rate": 0.5174825174825175,
+      "excess_net_raw_per_period": 0.00011430561132514751,
+      "excess_net_raw_annualized": 0.005761002810787434,
+      "excess_net_raw_median_annualized": 0.01396556618229118,
+      "excess_net_raw_hit_rate": 0.5174825174825175
+    },
+    "val_ic": {
+      "ok": true,
+      "ic_mean": 0.04261700411859889,
+      "ic_t": 3.1015933586118747,
+      "ic_n": 144,
+      "ic_hit": 0.625
+    },
+    "val_gate_passed": true,
+    "test": {
+      "ok": true,
+      "n_periods": 143,
+      "gross_per_period": 0.00047492466639444976,
+      "gross_ls_per_period": 0.000954593175711197,
+      "turnover": 0.15423234176478023,
+      "breakeven_cost": 0.003079280655147916,
+      "breakeven_cost_long_short": 0.003094659540237829,
+      "hit_rate_vs_bench_gross": 0.46853146853146854,
+      "long_absolute_annualized": 0.1616046300529226,
+      "benchmark_annualized": 0.1609883569414771,
+      "excess_net_winsor_per_period": 1.2227641100109139e-05,
+      "excess_net_winsor_annualized": 0.0006162731114455006,
+      "excess_net_winsor_median_annualized": -0.07876600798233724,
+      "excess_net_winsor_hit_rate": 0.45454545454545453,
+      "excess_net_median_per_period": 0.0010871275259745504,
+      "excess_net_median_annualized": 0.05479122730911734,
+      "excess_net_median_median_annualized": -0.009855855014836674,
+      "excess_net_median_hit_rate": 0.4825174825174825,
+      "excess_net_raw_per_period": 0.00032952805658516146,
+      "excess_net_raw_annualized": 0.016608214051892136,
+      "excess_net_raw_median_annualized": -0.057431006107908654,
+      "excess_net_raw_hit_rate": 0.46853146853146854
+    },
+    "test_ic": {
+      "ok": true,
+      "ic_mean": 0.04843161991037766,
+      "ic_t": 3.3995964503199194,
+      "ic_n": 143,
+      "ic_hit": 0.6083916083916084
+    }
+  },
+  "train_survivors": {
+    "n": 20,
+    "top": [
+      {
+        "path": "breakeven",
+        "k": 3,
+        "set": [
+          "ma_dev_60",
+          "mom_60",
+          "turnover_trend"
+        ],
+        "excess_net_winsor_annualized": 0.03572633096552459,
+        "excess_net_median_annualized": 0.04292806814516075,
+        "turnover": 0.16501551650522256,
+        "gross_per_period": 0.0012039023226411557,
+        "breakeven_cost": 0.007295691630326494
+      },
+      {
+        "path": "gross",
+        "k": 3,
+        "set": [
+          "ma_dev_60",
+          "turnover_trend",
+          "mom_60"
+        ],
+        "excess_net_winsor_annualized": 0.03572633096552459,
+        "excess_net_median_annualized": 0.04292806814516075,
+        "turnover": 0.16501551650522256,
+        "gross_per_period": 0.0012039023226411557,
+        "breakeven_cost": 0.007295691630326494
+      },
+      {
+        "path": "gross",
+        "k": 2,
+        "set": [
+          "ma_dev_60",
+          "turnover_trend"
+        ],
+        "excess_net_winsor_annualized": 0.03415147045814119,
+        "excess_net_median_annualized": 0.03336848415701552,
+        "turnover": 0.18055775460416285,
+        "gross_per_period": 0.0012192818046486231,
+        "breakeven_cost": 0.006752863134134877
+      },
+      {
+        "path": "breakeven",
+        "k": 1,
+        "set": [
+          "ma_dev_60"
+        ],
+        "excess_net_winsor_annualized": 0.033249133398673435,
+        "excess_net_median_annualized": 0.03387658453018687,
+        "turnover": 0.17418889342071261,
+        "gross_per_period": 0.0011822717080135947,
+        "breakeven_cost": 0.006787296737445213
+      },
+      {
+        "path": "gross",
+        "k": 1,
+        "set": [
+          "ma_dev_60"
+        ],
+        "excess_net_winsor_annualized": 0.033249133398673435,
+        "excess_net_median_annualized": 0.03387658453018687,
+        "turnover": 0.17418889342071261,
+        "gross_per_period": 0.0011822717080135947,
+        "breakeven_cost": 0.006787296737445213
+      }
+    ],
+    "note": "训练段上「成本后超额三口径全正且幅度>0.30%/年」的子集数量"
+  },
+  "verdict": {
+    "flips_on_train": true,
+    "flips_on_val": false,
+    "flips_on_test": false,
+    "conclusion": "降换手在样本外确实稳定改善了超额（验证段 -3.78% → -0.93%，测试段 -1.30% → +0.06%）：换手 0.2211 → 0.1542，成本拖累省下 2.01 bp/期。但补上成本缺口之后剩下的超额仍在 0 附近（验证段 -0.93%、测试段 +0.06%，门槛 0.30%/年），省得出成本，省不出 alpha，仍然不能实盘。"
+  },
+  "limitations": [
+    "测试段已被本项目多个假设反复看过，对新假设不再是处女地；测试段数字只能算旁证，不能算独立确认。",
+    "因子子集只按时间外切分选择，未做组合爆炸式的全子集搜索；贪心路径本身也是一种选择偏好。",
+    "训练段毛超额显著高于验证/测试段（口径漂移），训练段的结论不能直接外推。",
+    "未缩尾口径用 long_raw − bench（基准只有缩尾值），极端值披露口径略有不对齐。"
+  ],
+  "improvement_vs_full": {
+    "val_excess_annualized_delta": 0.02852928911544908,
+    "test_excess_annualized_delta": 0.013578321663916142,
+    "val_turnover": 0.15276417601242612,
+    "full_val_turnover": 0.22115911278643124,
+    "test_turnover": 0.15423234176478023,
+    "full_test_turnover": 0.22110322298759919,
+    "cost_drag_per_period_saved": 0.00020061264366845686
+  }
+}
